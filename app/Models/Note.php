@@ -12,7 +12,15 @@ class Note extends Model
         'title',
         'content',
         'course_id',
+        'starred_at',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'starred_at' => 'datetime',
+        ];
+    }
 
     public function user(): BelongsTo
     {

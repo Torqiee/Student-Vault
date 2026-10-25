@@ -17,6 +17,10 @@
     <div class="py-12">
         <div class="mx-auto max-w-3xl sm:px-6 lg:px-8">
 
+            @if (session('success'))
+                <div class="mb-4 rounded-lg bg-green-100 p-4 text-green-700" role="status">{{ session('success') }}</div>
+            @endif
+
             <div class="rounded-xl bg-white p-6 shadow-sm">
 
                 <p class="mb-4 text-sm text-gray-500">
@@ -35,6 +39,7 @@
                 </div>
 
                 <div class="mt-6 flex justify-end gap-3">
+                    <x-star-button :action="route('notes.star', $note)" :starred="$note->starred_at !== null" :label="$note->title" />
 
                     <a
                         href="{{ route('notes.edit', $note) }}"
