@@ -6,6 +6,7 @@ use App\Http\Controllers\NoteController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\StarredController;
+use App\Http\Controllers\TrashController;
 use App\Http\Controllers\VaultFileController;
 use Illuminate\Support\Facades\Route;
 
@@ -25,6 +26,11 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/search', SearchController::class)->name('search.index');
     Route::get('/starred', StarredController::class)->name('starred.index');
+    Route::get('/trash', [TrashController::class, 'index'])->name('trash.index');
+    Route::patch('/trash/notes/{note}/restore', [TrashController::class, 'restoreNote'])->name('trash.notes.restore');
+    Route::delete('/trash/notes/{note}', [TrashController::class, 'destroyNote'])->name('trash.notes.destroy');
+    Route::patch('/trash/files/{vaultFile}/restore', [TrashController::class, 'restoreFile'])->name('trash.files.restore');
+    Route::delete('/trash/files/{vaultFile}', [TrashController::class, 'destroyFile'])->name('trash.files.destroy');
 
     Route::resource('notes', NoteController::class);
     Route::patch('/notes/{note}/star', [NoteController::class, 'toggleStar'])->name('notes.star');

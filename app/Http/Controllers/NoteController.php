@@ -116,7 +116,7 @@ class NoteController extends Controller
 
         return redirect()
             ->route('notes.index')
-            ->with('success', 'Note deleted successfully.');
+            ->with('success', 'Note moved to Trash.');
     }
 
     public function toggleStar(Request $request, Note $note): RedirectResponse

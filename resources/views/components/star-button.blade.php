@@ -14,6 +14,6 @@
         aria-label="{{ $starred ? 'Remove star from '.$label : 'Star '.$label }}"
         title="{{ $starred ? 'Remove star' : 'Add star' }}"
     >
-        <span aria-hidden="true">{{ $starred ? '★' : '☆' }}</span>
+        <i @class(['fa-solid fa-star' => $starred, 'fa-regular fa-star' => ! $starred]) aria-hidden="true"></i>
     </button>
 </form>
