@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="text-xl font-semibold text-gray-800">Add to Personal Vault</h2>
+        <h2 class="text-xl font-semibold text-slate-900">Add to Personal Vault</h2>
     </x-slot>
 
     <div class="py-10">

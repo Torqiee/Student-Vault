@@ -23,14 +23,14 @@
 
     <div>
         <label for="label" class="block text-sm font-medium text-slate-700">Entry name</label>
-        <input id="label" name="label" type="text" maxlength="100" required value="{{ $currentLabel }}" class="mt-1 block w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="e.g. My student profile">
+        <input id="label" name="label" type="text" maxlength="100" required value="{{ $currentLabel }}" class="mt-1 block w-full rounded-lg border-slate-300 shadow-sm focus:border-primary-700 focus:ring-primary-700" placeholder="e.g. My student profile">
         <p class="mt-1 text-xs text-slate-500">The entry name is encrypted in the database too.</p>
         @error('label') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
     </div>
 
     <div>
         <label for="category" class="block text-sm font-medium text-slate-700">Information category</label>
-        <select id="category" name="category" x-model="category" required class="mt-1 block w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+        <select id="category" name="category" x-model="category" required class="mt-1 block w-full rounded-lg border-slate-300 shadow-sm focus:border-primary-700 focus:ring-primary-700">
             @foreach ($categories as $value => $label)
                 <option value="{{ $value }}">{{ $label }}</option>
             @endforeach
@@ -51,9 +51,9 @@
                 <div>
                     <label for="field_{{ $key }}" class="block text-sm font-medium text-slate-700">{{ $fieldLabels[$key] }}</label>
                     @if (in_array($key, $longFields, true))
-                        <textarea id="field_{{ $key }}" name="fields[{{ $key }}]" rows="{{ $key === 'address' ? 3 : 5 }}" class="mt-1 block w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ $fieldValue }}</textarea>
+                        <textarea id="field_{{ $key }}" name="fields[{{ $key }}]" rows="{{ $key === 'address' ? 3 : 5 }}" class="mt-1 block w-full rounded-lg border-slate-300 shadow-sm focus:border-primary-700 focus:ring-primary-700">{{ $fieldValue }}</textarea>
                     @else
-                        <input id="field_{{ $key }}" name="fields[{{ $key }}]" type="{{ $inputType }}" value="{{ $fieldValue }}" class="mt-1 block w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <input id="field_{{ $key }}" name="fields[{{ $key }}]" type="{{ $inputType }}" value="{{ $fieldValue }}" class="mt-1 block w-full rounded-lg border-slate-300 shadow-sm focus:border-primary-700 focus:ring-primary-700">
                     @endif
                     @error('fields.'.$key) <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
@@ -62,7 +62,7 @@
             @if ($group === 'identity')
                 <div class="border-t border-slate-200 pt-4">
                     <label for="identity_file_id" class="block text-sm font-medium text-slate-700">Link an identity scan from Files (optional)</label>
-                    <select id="identity_file_id" name="identity_file_id" class="mt-1 block w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    <select id="identity_file_id" name="identity_file_id" class="mt-1 block w-full rounded-lg border-slate-300 shadow-sm focus:border-primary-700 focus:ring-primary-700">
                         <option value="">No linked file</option>
                         @foreach ($identityFiles as $file)
                             <option value="{{ $file->id }}" @selected((string) $currentIdentityFile === (string) $file->id)>{{ $file->original_name }}</option>
@@ -81,6 +81,6 @@
 
     <div class="flex flex-wrap justify-end gap-3 border-t border-slate-100 pt-5">
         <a href="{{ route('personal-vault.index') }}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Cancel</a>
-        <button type="submit" class="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-700">{{ $isEditing ? 'Save changes securely' : 'Encrypt and save' }}</button>
+        <button type="submit" class="rounded-lg bg-primary-700 px-5 py-2 text-sm font-semibold text-white hover:bg-primary-800">{{ $isEditing ? 'Save changes' : 'Upload Data' }}</button>
     </div>
 </form>
