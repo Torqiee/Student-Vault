@@ -5,10 +5,12 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\PersonalVaultController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SharedFolderController;
 use App\Http\Controllers\SharedFolderInvitationController;
 use App\Http\Controllers\SharedFolderItemController;
 use App\Http\Controllers\SharedFolderMemberController;
+use App\Http\Controllers\StarredController;
 use App\Http\Controllers\TrashController;
 use App\Http\Controllers\VaultFileController;
 use Illuminate\Support\Facades\Route;
@@ -27,6 +29,8 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware('auth')->group(function () {
 
+    Route::get('/search', SearchController::class)->name('search.index');
+    Route::get('/starred', StarredController::class)->name('starred.index');
     Route::get('/trash', [TrashController::class, 'index'])->name('trash.index');
     Route::patch('/trash/notes/{note}/restore', [TrashController::class, 'restoreNote'])->name('trash.notes.restore');
     Route::delete('/trash/notes/{note}', [TrashController::class, 'destroyNote'])->name('trash.notes.destroy');
@@ -34,11 +38,13 @@ Route::middleware('auth')->group(function () {
     Route::delete('/trash/files/{vaultFile}', [TrashController::class, 'destroyFile'])->name('trash.files.destroy');
 
     Route::resource('notes', NoteController::class);
+    Route::patch('/notes/{note}/star', [NoteController::class, 'toggleStar'])->name('notes.star');
     Route::resource('courses', CourseController::class);
     Route::get('/vault', [VaultFileController::class, 'index'])->name('vault.index');
     Route::get('/vault/create', [VaultFileController::class, 'create'])->name('vault.create');
     Route::post('/vault', [VaultFileController::class, 'store'])->name('vault.store');
     Route::patch('/vault/{vaultFile}/course', [VaultFileController::class, 'updateCourse'])->name('vault.course.update');
+    Route::patch('/vault/{vaultFile}/star', [VaultFileController::class, 'toggleStar'])->name('vault.star');
     Route::get('/vault/{vaultFile}/download', [VaultFileController::class, 'download'])->name('vault.download');
     Route::delete('/vault/{vaultFile}', [VaultFileController::class, 'destroy'])->name('vault.destroy');
     Route::get('/personal-vault', [PersonalVaultController::class, 'index'])->name('personal-vault.index');

@@ -20,7 +20,13 @@ class VaultFile extends Model
         'original_size',
         'original_hash',
         'course_id',
+        'starred_at',
     ];
+
+    protected function casts(): array
+    {
+        return ['starred_at' => 'datetime'];
+    }
 
     public function user(): BelongsTo
     {
