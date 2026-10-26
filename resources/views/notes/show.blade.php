@@ -9,7 +9,7 @@
                 href="{{ route('notes.index') }}"
                 class="text-sm text-gray-600 hover:text-gray-900"
             >
-                ← Back to Notes
+                <i class="fa-solid fa-arrow-left mr-1" aria-hidden="true"></i> Back to Notes
             </a>
         </div>
     </x-slot>
@@ -26,7 +26,7 @@
                 <p class="mb-4 text-sm text-gray-500">
                     Course:
                     @if ($note->course)
-                        <a href="{{ route('courses.show', $note->course) }}" class="font-medium text-indigo-600 hover:underline">{{ $note->course->name }}</a>
+                        <a href="{{ route('courses.show', $note->course) }}" class="font-medium text-primary-700 hover:underline">{{ $note->course->name }}</a>
                     @else
                         General
                     @endif
@@ -43,26 +43,18 @@
 
                     <a
                         href="{{ route('notes.edit', $note) }}"
-                        class="rounded-lg bg-indigo-600 px-4 py-2 text-white"
+                        class="rounded-lg bg-primary-700 px-4 py-2 text-white"
                     >
                         Edit
                     </a>
 
-                    <form
-                        method="POST"
-                        action="{{ route('notes.destroy', $note) }}"
-                        onsubmit="return confirm('Delete this note?')"
-                    >
-                        @csrf
-                        @method('DELETE')
-
-                        <button
-                            type="submit"
-                            class="rounded-lg bg-red-600 px-4 py-2 text-white"
-                        >
-                            Delete
-                        </button>
-                    </form>
+                    <x-confirm-action
+                        :name="'trash-note-'.$note->id"
+                        :action="route('notes.destroy', $note)"
+                        title="Move this note to Trash?"
+                        message="You can restore this note from Trash later."
+                        confirm-label="Move to Trash"
+                    />
 
                 </div>
 

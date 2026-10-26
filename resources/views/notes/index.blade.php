@@ -8,8 +8,8 @@
                 <p class="mt-1 text-sm text-slate-500">Capture and revisit your study notes.</p>
             </div>
 
-            <a href="{{ route('notes.create') }}" class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700">
-                + New Note
+            <a href="{{ route('notes.create') }}" class="inline-flex items-center justify-center rounded-lg bg-primary-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-800">
+                <i class="fa-solid fa-plus mr-1" aria-hidden="true"></i> New Note
             </a>
         </div>
     </x-slot>
@@ -26,7 +26,7 @@
 
             <div class="min-w-40">
                 <label for="note-sort" class="block text-xs font-semibold uppercase tracking-wide text-slate-500">Sort by</label>
-                <select id="note-sort" name="sort" class="mt-1 block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <select id="note-sort" name="sort" class="mt-1 block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-primary-700 focus:ring-primary-700">
                     <option value="newest" @selected($sort === 'newest')>Newest first</option>
                     <option value="oldest" @selected($sort === 'oldest')>Oldest first</option>
                     <option value="title" @selected($sort === 'title')>Title A–Z</option>
@@ -53,7 +53,7 @@
                         @endif
 
                         <div class="mt-4 flex flex-wrap items-center justify-between gap-2 text-xs">
-                            <span class="rounded-full bg-indigo-50 px-2.5 py-1 font-medium text-indigo-700">{{ $note->course?->name ?? 'General' }}</span>
+                            <span class="rounded-full bg-primary-50 px-2.5 py-1 font-medium text-primary-700">{{ $note->course?->name ?? 'General' }}</span>
                             <span class="text-slate-400">{{ $note->updated_at->diffForHumans() }}</span>
                         </div>
                     </a>
@@ -62,7 +62,7 @@
                 <div class="col-span-full rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center">
                     <p class="font-semibold text-slate-800">No notes yet.</p>
                     <p class="mt-2 text-sm text-slate-500">Create your first note to start documenting your studies.</p>
-                    <a href="{{ route('notes.create') }}" class="mt-4 inline-flex text-sm font-semibold text-indigo-600 hover:text-indigo-800">Create a note</a>
+                    <a href="{{ route('notes.create') }}" class="mt-4 inline-flex text-sm font-semibold text-primary-700 hover:text-primary-800">Create a note</a>
                 </div>
             @endforelse
         </div>

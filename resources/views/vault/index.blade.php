@@ -13,7 +13,7 @@
 
             <a
                 href="{{ route('vault.create') }}"
-                class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700"
+                class="inline-flex items-center justify-center rounded-lg bg-primary-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-800"
             >
                 Upload File
             </a>
@@ -46,7 +46,7 @@
 
             <div class="min-w-40">
                 <label for="file-category" class="block text-xs font-semibold uppercase tracking-wide text-slate-500">Category</label>
-                <select id="file-category" name="category" class="mt-1 block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <select id="file-category" name="category" class="mt-1 block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-primary-700 focus:ring-primary-700">
                     <option value="">All categories</option>
                     @foreach (['documents', 'identity', 'assignments', 'videos'] as $option)
                         <option value="{{ $option }}" @selected($category === $option)>{{ ucfirst($option) }}</option>
@@ -56,7 +56,7 @@
 
             <div class="min-w-40">
                 <label for="file-sort" class="block text-xs font-semibold uppercase tracking-wide text-slate-500">Sort by</label>
-                <select id="file-sort" name="sort" class="mt-1 block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <select id="file-sort" name="sort" class="mt-1 block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-primary-700 focus:ring-primary-700">
                     <option value="newest" @selected($sort === 'newest')>Newest first</option>
                     <option value="oldest" @selected($sort === 'oldest')>Oldest first</option>
                     <option value="name" @selected($sort === 'name')>Name A–Z</option>
@@ -136,7 +136,7 @@
                                             <option value="{{ $course->id }}" @selected($file->course_id === $course->id)>{{ $course->name }}</option>
                                         @endforeach
                                     </select>
-                                    <button type="submit" class="text-sm font-semibold text-indigo-600 hover:underline">Save</button>
+                                    <button type="submit" class="text-sm font-semibold text-primary-700 hover:underline">Save</button>
                                 </form>
                             </td>
 
@@ -162,31 +162,20 @@
                                             'vault.download',
                                             $file
                                         ) }}"
-                                        class="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+                                        class="rounded-lg bg-primary-700 px-3 py-2 text-sm font-semibold text-white hover:bg-primary-800"
                                     >
                                         Download
                                     </a>
 
 
-                                    <form
-                                        method="POST"
-                                        action="{{ route(
-                                            'vault.destroy',
-                                            $file
-                                        ) }}"
-                                        onsubmit="return confirm('Delete this file?')"
-                                    >
-
-                                        @csrf
-                                        @method('DELETE')
-
-                                        <button
-                                            class="rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-700"
-                                        >
-                                            Delete
-                                        </button>
-
-                                    </form>
+                                    <x-confirm-action
+                                        :name="'trash-file-'.$file->id"
+                                        :action="route('vault.destroy', $file)"
+                                        title="Move this file to Trash?"
+                                        message="You can restore this file from Trash later."
+                                        confirm-label="Move to Trash"
+                                        trigger-class="rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-700"
+                                    />
 
                                 </div>
 
@@ -205,11 +194,11 @@
                                 @if ($category !== null || $courseFilter !== null)
                                     <p class="font-semibold text-slate-800">No files match these filters.</p>
                                     <p class="mt-2 text-sm">Try another category or course.</p>
-                                    <a href="{{ route('vault.index') }}" class="mt-4 inline-flex text-sm font-semibold text-indigo-600 hover:text-indigo-800">Clear filters</a>
+                                    <a href="{{ route('vault.index') }}" class="mt-4 inline-flex text-sm font-semibold text-primary-700 hover:text-primary-800">Clear filters</a>
                                 @else
                                     <p class="font-semibold text-slate-800">Your vault is empty.</p>
                                     <p class="mt-2 text-sm">Securely store your first document.</p>
-                                    <a href="{{ route('vault.create') }}" class="mt-4 inline-flex text-sm font-semibold text-indigo-600 hover:text-indigo-800">Upload a file</a>
+                                    <a href="{{ route('vault.create') }}" class="mt-4 inline-flex text-sm font-semibold text-primary-700 hover:text-primary-800">Upload a file</a>
                                 @endif
                             </td>
 

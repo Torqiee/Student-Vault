@@ -1364,12 +1364,14 @@ Status: **Completed**
 
 ## Phase 9 — Trash
 
-- [ ] Soft delete Notes
-- [ ] Soft delete Files
-- [ ] Trash page
-- [ ] Restore
-- [ ] Permanent deletion
-- [ ] Delete ciphertext after permanent deletion
+Status: **Completed**
+
+- [x] Soft delete Notes
+- [x] Soft delete Files
+- [x] Trash page
+- [x] Restore
+- [x] Permanent deletion
+- [x] Delete ciphertext after permanent deletion
 
 ---
 
@@ -1454,7 +1456,7 @@ StudentVault dianggap selesai ketika:
 
 - [x] Search bekerja.
 - [x] Starred bekerja.
-- [ ] Trash dan Restore bekerja.
+- [x] Trash dan Restore bekerja.
 
 ### Security
 

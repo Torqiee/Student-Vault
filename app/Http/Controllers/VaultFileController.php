@@ -143,7 +143,7 @@ class VaultFileController extends Controller
             ->route('vault.index')
             ->with(
                 'success',
-                'File deleted.'
+                'File moved to Trash.'
             );
     }
 
