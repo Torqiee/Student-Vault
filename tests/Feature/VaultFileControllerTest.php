@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Course;
 use App\Models\User;
 use App\Services\Encryption\EncryptionManager;
 use Illuminate\Http\UploadedFile;
@@ -102,4 +103,195 @@ it('rejects files larger than fifty megabytes', function () {
     ])->assertSessionHasErrors('file');
 
     expect($user->vaultFiles()->count())->toBe(0);
+});
+
+it('filters files by category', function () {
+    $user = User::factory()->create();
+    $user->vaultFiles()->create([
+        'original_name' => 'assignment.pdf',
+        'stored_name' => 'assignment.vault',
+        'category' => 'assignments',
+        'cipher' => 'des',
+        'mime_type' => 'application/pdf',
+        'original_size' => 1024,
+        'original_hash' => str_repeat('a', 64),
+    ]);
+    $user->vaultFiles()->create([
+        'original_name' => 'document.pdf',
+        'stored_name' => 'document.vault',
+        'category' => 'documents',
+        'cipher' => 'aes',
+        'mime_type' => 'application/pdf',
+        'original_size' => 2048,
+        'original_hash' => str_repeat('b', 64),
+    ]);
+
+    $this->actingAs($user)->get(route('vault.index', ['category' => 'assignments']))
+        ->assertOk()
+        ->assertSee('assignment.pdf')
+        ->assertDontSee('document.pdf');
+});
+
+it('filters files by category within the selected course', function () {
+    $user = User::factory()->create();
+    $course = Course::factory()->for($user)->create();
+    $user->vaultFiles()->create([
+        'original_name' => 'course-assignment.pdf',
+        'stored_name' => 'course-assignment.vault',
+        'category' => 'assignments',
+        'cipher' => 'des',
+        'mime_type' => 'application/pdf',
+        'original_size' => 1024,
+        'original_hash' => str_repeat('a', 64),
+        'course_id' => $course->id,
+    ]);
+    $user->vaultFiles()->create([
+        'original_name' => 'course-document.pdf',
+        'stored_name' => 'course-document.vault',
+        'category' => 'documents',
+        'cipher' => 'aes',
+        'mime_type' => 'application/pdf',
+        'original_size' => 2048,
+        'original_hash' => str_repeat('b', 64),
+        'course_id' => $course->id,
+    ]);
+    $user->vaultFiles()->create([
+        'original_name' => 'general-assignment.pdf',
+        'stored_name' => 'general-assignment.vault',
+        'category' => 'assignments',
+        'cipher' => 'des',
+        'mime_type' => 'application/pdf',
+        'original_size' => 512,
+        'original_hash' => str_repeat('c', 64),
+    ]);
+
+    $this->actingAs($user)->get(route('vault.index', [
+        'course' => $course->id,
+        'category' => 'assignments',
+    ]))
+        ->assertOk()
+        ->assertSee('course-assignment.pdf')
+        ->assertDontSee('course-document.pdf')
+        ->assertDontSee('general-assignment.pdf');
+});
+
+it('sorts files by name', function () {
+    $user = User::factory()->create();
+    $user->vaultFiles()->create([
+        'original_name' => 'zeta.pdf',
+        'stored_name' => 'zeta.vault',
+        'category' => 'documents',
+        'cipher' => 'aes',
+        'mime_type' => 'application/pdf',
+        'original_size' => 300,
+        'original_hash' => str_repeat('a', 64),
+    ]);
+    $user->vaultFiles()->create([
+        'original_name' => 'alpha.pdf',
+        'stored_name' => 'alpha.vault',
+        'category' => 'documents',
+        'cipher' => 'aes',
+        'mime_type' => 'application/pdf',
+        'original_size' => 100,
+        'original_hash' => str_repeat('b', 64),
+    ]);
+
+    $this->actingAs($user)->get(route('vault.index', ['sort' => 'name']))
+        ->assertOk()
+        ->assertSeeInOrder(['alpha.pdf', 'zeta.pdf']);
+});
+
+it('sorts files by size descending', function () {
+    $user = User::factory()->create();
+    $user->vaultFiles()->create([
+        'original_name' => 'small.pdf',
+        'stored_name' => 'small.vault',
+        'category' => 'documents',
+        'cipher' => 'aes',
+        'mime_type' => 'application/pdf',
+        'original_size' => 100,
+        'original_hash' => str_repeat('a', 64),
+    ]);
+    $user->vaultFiles()->create([
+        'original_name' => 'large.pdf',
+        'stored_name' => 'large.vault',
+        'category' => 'documents',
+        'cipher' => 'aes',
+        'mime_type' => 'application/pdf',
+        'original_size' => 300,
+        'original_hash' => str_repeat('b', 64),
+    ]);
+
+    $this->actingAs($user)->get(route('vault.index', ['sort' => 'size_desc']))
+        ->assertOk()
+        ->assertSeeInOrder(['large.pdf', 'small.pdf']);
+});
+
+it('falls back to defaults for unknown category and sort values', function () {
+    $user = User::factory()->create();
+    $user->vaultFiles()->create([
+        'original_name' => 'visible.pdf',
+        'stored_name' => 'visible.vault',
+        'category' => 'documents',
+        'cipher' => 'aes',
+        'mime_type' => 'application/pdf',
+        'original_size' => 100,
+        'original_hash' => str_repeat('a', 64),
+    ]);
+
+    $this->actingAs($user)->get(route('vault.index', [
+        'category' => 'not-a-category',
+        'sort' => 'not-a-sort; DROP TABLE vault_files',
+    ]))
+        ->assertOk()
+        ->assertSee('visible.pdf');
+});
+
+it('toggles a file star for its owner', function () {
+    $user = User::factory()->create();
+    $vaultFile = $user->vaultFiles()->create([
+        'original_name' => 'starred-candidate.pdf',
+        'stored_name' => 'starred-candidate.vault',
+        'category' => 'documents',
+        'cipher' => 'aes',
+        'mime_type' => 'application/pdf',
+        'original_size' => 100,
+        'original_hash' => str_repeat('a', 64),
+    ]);
+
+    $this->actingAs($user)
+        ->from(route('vault.index'))
+        ->patch(route('vault.star', $vaultFile))
+        ->assertRedirect(route('vault.index'))
+        ->assertSessionHas('success', 'File starred.');
+
+    expect($vaultFile->fresh()->starred_at)->not->toBeNull();
+
+    $this->actingAs($user)
+        ->from(route('vault.index'))
+        ->patch(route('vault.star', $vaultFile))
+        ->assertRedirect(route('vault.index'))
+        ->assertSessionHas('success', 'File unstarred.');
+
+    expect($vaultFile->fresh()->starred_at)->toBeNull();
+});
+
+it('forbids starring another users file', function () {
+    $owner = User::factory()->create();
+    $otherUser = User::factory()->create();
+    $vaultFile = $owner->vaultFiles()->create([
+        'original_name' => 'private.pdf',
+        'stored_name' => 'private-star.vault',
+        'category' => 'documents',
+        'cipher' => 'aes',
+        'mime_type' => 'application/pdf',
+        'original_size' => 100,
+        'original_hash' => str_repeat('a', 64),
+    ]);
+
+    $this->actingAs($otherUser)
+        ->patch(route('vault.star', $vaultFile))
+        ->assertForbidden();
+
+    expect($vaultFile->fresh()->starred_at)->toBeNull();
 });
