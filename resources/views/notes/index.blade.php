@@ -19,34 +19,12 @@
             <div class="rounded-lg bg-green-100 p-4 text-green-700" role="status">{{ session('success') }}</div>
         @endif
 
-        <form method="GET" action="{{ route('notes.index') }}" class="flex flex-wrap items-end gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            @if ($courseFilter !== null)
-                <input type="hidden" name="course" value="{{ $courseFilter }}">
-            @endif
-
-            <div class="min-w-40">
-                <label for="note-sort" class="block text-xs font-semibold uppercase tracking-wide text-slate-500">Sort by</label>
-                <select id="note-sort" name="sort" class="mt-1 block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-primary-700 focus:ring-primary-700">
-                    <option value="newest" @selected($sort === 'newest')>Newest first</option>
-                    <option value="oldest" @selected($sort === 'oldest')>Oldest first</option>
-                    <option value="title" @selected($sort === 'title')>Title A–Z</option>
-                </select>
-            </div>
-
-            <button type="submit" class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700">Apply</button>
-
-            @if ($sort !== 'newest')
-                <a href="{{ route('notes.index', $courseFilter !== null ? ['course' => $courseFilter] : []) }}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Reset</a>
-            @endif
-        </form>
-
         <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             @forelse ($notes as $note)
-                <div class="relative rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
-                    <x-star-button :action="route('notes.star', $note)" :starred="$note->starred_at !== null" :label="$note->title" class="absolute right-4 top-4" />
+                <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
 
                     <a href="{{ route('notes.show', $note) }}" class="block">
-                        <h2 class="pr-8 font-semibold text-slate-900">{{ $note->title }}</h2>
+                        <h2 class="font-semibold text-slate-900">{{ $note->title }}</h2>
 
                         @if ($note->content)
                             <p class="mt-2 line-clamp-3 text-sm text-slate-500">{{ $note->content }}</p>

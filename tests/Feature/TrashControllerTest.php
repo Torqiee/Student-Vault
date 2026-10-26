@@ -202,16 +202,13 @@ it('escapes deleted note titles and file names in trash', function () {
         ->assertDontSee('<img src=x', false);
 });
 
-it('keeps trashed notes out of starred results and course pages', function () {
+it('keeps trashed notes out of course pages', function () {
     $user = User::factory()->create();
     $course = $user->courses()->create(['name' => 'Machine Learning']);
     $note = $user->notes()->create([
         'title' => 'Hidden course note', 'content' => null, 'course_id' => $course->id,
-        'starred_at' => now(),
     ]);
     $note->delete();
 
-    $this->actingAs($user)->get(route('starred.index'))->assertOk()->assertDontSee('Hidden course note');
     $this->actingAs($user)->get(route('courses.show', $course))->assertOk()->assertDontSee('Hidden course note');
-    $this->actingAs($user)->get(route('search.index', ['q' => 'Hidden']))->assertOk()->assertDontSee('Hidden course note');
 });

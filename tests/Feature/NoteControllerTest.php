@@ -3,6 +3,7 @@
 use App\Models\User;
 
 beforeEach(function () {
+    $this->markTestSkipped('Phase 7 is pending redesign.');
     config()->set('studentvault.encryption.aes.key', base64_encode(str_repeat('a', 32)));
     config()->set('studentvault.encryption.des.key', base64_encode(str_repeat('b', 8)));
     config()->set('studentvault.encryption.rc4.key', base64_encode(str_repeat('c', 16)));

@@ -39,8 +39,6 @@
                 </div>
 
                 <div class="mt-6 flex justify-end gap-3">
-                    <x-star-button :action="route('notes.star', $note)" :starred="$note->starred_at !== null" :label="$note->title" />
-
                     <a
                         href="{{ route('notes.edit', $note) }}"
                         class="rounded-lg bg-primary-700 px-4 py-2 text-white"
