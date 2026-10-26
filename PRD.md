@@ -84,6 +84,7 @@ StudentVault harus:
 10. Menyediakan dashboard yang memberikan ringkasan isi StudentVault.
 11. Mengimplementasikan AES, DES, dan RC4.
 12. Menyediakan evaluasi performa ketiga cipher pada tahap akhir pengembangan.
+13. Memungkinkan kolaborasi terbatas melalui Shared Folder berbasis undangan.
 
 ---
 
@@ -93,7 +94,7 @@ StudentVault bukan:
 
 - Public file sharing service.
 - Social media.
-- Collaboration platform.
+- Collaboration platform dengan akses publik atau kolaborasi di luar Shared Folder yang diundang.
 - Public cloud storage.
 - File encryption tool yang meminta pengguna memilih algoritma.
 - Production password manager.
@@ -142,7 +143,7 @@ User B
 └── Courses B
 ```
 
-User A tidak boleh mengakses resource milik User B.
+User A tidak boleh mengakses resource milik User B, kecuali note atau file yang secara eksplisit dimasukkan ke Shared Folder dan User A telah menerima undangannya. Akses terbatas pada isi folder tersebut; kepemilikan resource tetap pada pemilik asal.
 
 ---
 
@@ -570,6 +571,7 @@ MY SPACE
 ├── Notes
 ├── Files
 ├── Courses
+├── Shared Folders
 └── Starred
 
 PERSONAL
@@ -690,6 +692,49 @@ Files
 ├── Assignment.pdf
 └── Dataset.csv
 ```
+
+---
+
+## 15.6 Shared Folders
+
+Shared Folder adalah ruang bersama privat untuk Notes dan Files milik beberapa pengguna. Setiap folder memiliki satu owner. Folder tidak mempunyai tautan publik dan hanya dapat dibuka owner atau anggota yang sudah menerima undangan.
+
+Alur utama:
+
+1. User membuat Shared Folder dengan nama dan deskripsi opsional.
+2. Owner mengundang pengguna lain menggunakan alamat email akun StudentVault yang terdaftar.
+3. Penerima melihat undangan di aplikasi dan menerima email berisi tautan menuju halaman undangan. Tautan email tidak memberikan akses tanpa login ke akun dengan alamat email yang diundang.
+4. Penerima dapat **Accept** atau **Decline**. Hanya undangan yang diterima menghasilkan keanggotaan aktif.
+5. Owner dan anggota aktif dapat memasukkan Notes atau Files milik mereka sendiri ke folder yang sama.
+6. Anggota aktif dapat membaca note dan mengunduh file yang ada di folder, termasuk kontribusi pengguna lain.
+
+Folder menampilkan nama, owner, daftar anggota, undangan yang masih pending (untuk owner), serta daftar Notes dan Files beserta kontributornya.
+
+## 15.7 Invitations and Membership
+
+- Satu undangan ditujukan pada satu alamat email akun terdaftar. Pengguna tidak dapat mengundang dirinya sendiri atau membuat undangan aktif yang duplikat.
+- Undangan memiliki status `pending`, `accepted`, `declined`, atau `revoked`, waktu pembuatan, dan waktu respons.
+- Hanya akun dengan email yang diundang dapat menerima atau menolak undangan. Undangan `declined` atau `revoked` tidak dapat dipakai kembali; owner dapat mengirim undangan baru.
+- Owner dapat membatalkan undangan pending dan menghapus anggota. Anggota dapat keluar dari folder. Perubahan keanggotaan langsung menghentikan akses ke isi folder.
+- Saat anggota keluar atau dihapus, semua item yang ia kontribusikan dilepas dari folder tanpa menghapus resource aslinya.
+- Hanya owner dapat mengubah nama/deskripsi folder, mengelola undangan dan anggota, atau menghapus folder. Anggota tidak dapat mengundang pengguna lain.
+
+## 15.8 Content and Ownership
+
+- Item folder berupa referensi ke Note atau VaultFile yang sudah ada, bukan salinan plaintext atau ciphertext baru. Satu item dapat berada di lebih dari satu Shared Folder jika pemiliknya memilih demikian.
+- Hanya pemilik Note atau VaultFile yang dapat menambahkannya ke folder dan mengubah atau menghapus resource aslinya. Anggota lain mendapat akses baca/download melalui folder, tanpa hak mengedit atau menghapus resource tersebut.
+- Owner dapat mengeluarkan item siapa pun dari folder tanpa menghapus resource aslinya. Kontributor dapat mengeluarkan item miliknya sendiri.
+- Jika Note atau VaultFile dipindahkan ke Trash atau dihapus permanen, relasinya dengan Shared Folder dilepas. Restore tidak otomatis membagikan kembali item tersebut.
+- Menghapus Shared Folder hanya menghapus folder, undangan, keanggotaan, dan relasi item; Notes dan Files asli tetap dimiliki serta disimpan oleh masing-masing pengguna.
+- Personal Vault tidak dapat dimasukkan ke Shared Folder.
+
+## 15.9 Shared Folder Security
+
+- Setiap akses folder, daftar item, detail note, dan download file harus memeriksa authentication serta status keanggotaan aktif. Owner selalu memiliki akses ke folder miliknya.
+- Pemeriksaan item harus memastikan item tersebut masih terhubung ke folder dan pemilik item masih merupakan anggota aktif atau owner. Menebak ID folder/item tidak boleh membuka data.
+- Route Notes dan Files pribadi tetap owner-only. Akses anggota terhadap kontribusi pengguna lain menggunakan route Shared Folder yang memverifikasi folder, keanggotaan, dan relasi item pada setiap request.
+- Enkripsi yang sudah ada tetap berlaku. Backend hanya mendekripsi setelah authorization lolos; plaintext tidak disimpan permanen dan file tetap berada di private storage.
+- Email undangan hanya berisi informasi undangan dan tautan login/halaman undangan, bukan isi note, file, atau kunci enkripsi.
 
 ---
 
@@ -897,7 +942,7 @@ File yang gagal integrity verification tidak boleh dianggap valid.
 
 # 22. Authorization Requirements
 
-Setiap protected resource harus mempunyai ownership validation.
+Setiap protected resource harus mempunyai ownership validation. Shared Folder menambah pengecualian berbasis keanggotaan aktif untuk akses baca/download pada item yang sengaja dibagikan.
 
 Contoh:
 
@@ -919,6 +964,7 @@ Berlaku untuk:
 - Starred resources
 - Personal Vault
 - Trash
+- Shared Folders, invitations, memberships, dan item yang dibagikan
 
 Tidak boleh hanya mengandalkan resource ID di URL.
 
@@ -997,7 +1043,13 @@ users
  │
  ├── courses
  │
- └── personal_data
+ ├── personal_data
+ └── shared_folders
+
+shared_folder_invitations
+shared_folder_memberships
+shared_folder_notes
+shared_folder_files
 ```
 
 Relationships:
@@ -1006,7 +1058,10 @@ Relationships:
 User
 ├── hasMany Notes
 ├── hasMany VaultFiles
-└── hasMany Courses
+├── hasMany Courses
+├── hasMany PersonalVaultEntries
+├── hasMany SharedFolders (sebagai owner)
+└── belongsToMany SharedFolders (sebagai anggota)
 
 Course
 ├── belongsTo User
@@ -1020,7 +1075,16 @@ Note
 VaultFile
 ├── belongsTo User
 └── belongsTo Course (optional)
+
+SharedFolder
+├── belongsTo User (owner)
+├── hasMany Invitations
+├── belongsToMany Users (anggota aktif)
+├── belongsToMany Notes (item bersama)
+└── belongsToMany VaultFiles (item bersama)
 ```
+
+Shared Folder memerlukan tabel untuk folder, undangan, keanggotaan, relasi note, dan relasi file. Relasi item harus unik per folder/resource dan dihapus saat resource masuk Trash atau keanggotaan kontributor berakhir.
 
 ---
 
@@ -1034,7 +1098,7 @@ Protected data hanya dapat diakses authenticated user.
 
 ### SR-02 Authorization
 
-User hanya dapat mengakses resource miliknya.
+User hanya dapat mengakses resource miliknya, kecuali akses baca/download yang diberikan secara eksplisit melalui keanggotaan aktif pada Shared Folder. Hak edit/hapus resource asli tetap pada pemilik resource.
 
 ### SR-03 Encryption at Rest
 
@@ -1343,13 +1407,13 @@ Status: **Completed**
 
 ## Phase 7 — Productivity
 
-Status: **Completed**
+Status: **Pending redesign**
 
-- [x] Search
-- [x] Starred Notes
-- [x] Starred Files
-- [x] Filter files by category
-- [x] Sort resources
+- [ ] Search
+- [ ] Starred Notes
+- [ ] Starred Files
+- [ ] Filter files by category
+- [ ] Sort resources
 
 ---
 
@@ -1377,7 +1441,22 @@ Status: **Completed**
 
 ---
 
-## Phase 10 — Security Improvements
+## Phase 10 — Shared Folders
+
+Status: **Completed**
+
+- [x] Shared Folder model, relasi item, dan CRUD owner
+- [x] Undangan berdasarkan email akun terdaftar dan notifikasi email/in-app
+- [x] Accept/Decline invitation dan pengelolaan anggota
+- [x] Kontribusi Notes/Files dari owner dan anggota aktif
+- [x] Akses baca/download bersama dengan authorization dan dekripsi aman
+- [x] Pencabutan akses serta penghapusan relasi saat keluar, Trash, atau hapus folder
+- [x] Shared Folders UI dan navigasi
+- [x] Pengujian alur undangan, kepemilikan, dan akses lintas pengguna
+
+---
+
+## Phase 11 — Security Improvements
 
 - [ ] Laravel Policies
 - [ ] File detail page
@@ -1389,7 +1468,7 @@ Status: **Completed**
 
 ---
 
-## Phase 11 — Benchmark
+## Phase 12 — Benchmark
 
 Deferred until core application completion.
 
@@ -1409,7 +1488,7 @@ Deferred until core application completion.
 
 ---
 
-## Phase 12 — Finalization
+## Phase 13 — Finalization
 
 - [ ] Responsive testing
 - [ ] UI polish
@@ -1454,10 +1533,20 @@ StudentVault dianggap selesai ketika:
 - [x] Notes dapat diorganisasi berdasarkan Course.
 - [x] Files dapat diorganisasi berdasarkan Course.
 
+### Shared Folders
+
+- [x] Owner dapat membuat folder dan mengundang akun lain melalui email.
+- [x] Penerima dapat menerima atau menolak undangan; undangan pending tidak memberi akses.
+- [x] Anggota aktif dapat menambahkan Notes/Files miliknya dan membaca/mengunduh kontribusi anggota lain.
+- [x] Anggota tidak dapat mengedit atau menghapus resource asli milik pengguna lain.
+- [x] Owner dapat mencabut akses dan anggota dapat keluar; akses langsung berhenti dan kontribusinya dilepas dari folder.
+- [x] Menghapus folder tidak menghapus Notes/Files asli.
+- [x] Guest, nonanggota, dan pengguna yang menebak ID tidak dapat mengakses isi folder.
+
 ### Productivity
 
-- [x] Search bekerja.
-- [x] Starred bekerja.
+- [ ] Search bekerja.
+- [ ] Starred bekerja.
 - [x] Trash dan Restore bekerja.
 
 ### Security
@@ -1514,6 +1603,6 @@ Final StudentVault:
 
 StudentVault harus terasa sebagai **private academic workspace untuk mahasiswa**, bukan sekadar demonstrasi algoritma enkripsi.
 
-Kriptografi bekerja di belakang aplikasi, sedangkan pengguna berinteraksi dengan fitur yang familiar seperti Notes, Courses, Files, Search, Starred, dan Trash.
+Kriptografi bekerja di belakang aplikasi, sedangkan pengguna berinteraksi dengan fitur yang familiar seperti Notes, Courses, Files, Shared Folders, Search, Starred, dan Trash.
 
 Benchmark AES/DES/RC4 menjadi bagian evaluasi teknis di tahap akhir, bukan fokus utama pengalaman pengguna.

@@ -7,6 +7,7 @@ use App\Models\VaultFile;
 use App\Services\Encryption\EncryptionManager;
 use App\Services\Encryption\EncryptionPolicy;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -142,7 +143,10 @@ class FileVaultService
 
     public function delete(VaultFile $vaultFile): void
     {
-        $vaultFile->delete();
+        DB::transaction(function () use ($vaultFile): void {
+            $vaultFile->sharedFolders()->detach();
+            $vaultFile->delete();
+        });
     }
 
     public function restore(VaultFile $vaultFile): void

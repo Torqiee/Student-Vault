@@ -39,39 +39,6 @@
             </div>
         @endif
 
-        <form method="GET" action="{{ route('vault.index') }}" class="flex flex-wrap items-end gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            @if ($courseFilter !== null)
-                <input type="hidden" name="course" value="{{ $courseFilter }}">
-            @endif
-
-            <div class="min-w-40">
-                <label for="file-category" class="block text-xs font-semibold uppercase tracking-wide text-slate-500">Category</label>
-                <select id="file-category" name="category" class="mt-1 block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-primary-700 focus:ring-primary-700">
-                    <option value="">All categories</option>
-                    @foreach (['documents', 'identity', 'assignments', 'videos'] as $option)
-                        <option value="{{ $option }}" @selected($category === $option)>{{ ucfirst($option) }}</option>
-                    @endforeach
-                </select>
-            </div>
-
-            <div class="min-w-40">
-                <label for="file-sort" class="block text-xs font-semibold uppercase tracking-wide text-slate-500">Sort by</label>
-                <select id="file-sort" name="sort" class="mt-1 block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-primary-700 focus:ring-primary-700">
-                    <option value="newest" @selected($sort === 'newest')>Newest first</option>
-                    <option value="oldest" @selected($sort === 'oldest')>Oldest first</option>
-                    <option value="name" @selected($sort === 'name')>Name A–Z</option>
-                    <option value="size_desc" @selected($sort === 'size_desc')>Largest first</option>
-                    <option value="size_asc" @selected($sort === 'size_asc')>Smallest first</option>
-                </select>
-            </div>
-
-            <button type="submit" class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700">Apply</button>
-
-            @if ($category !== null || $sort !== 'newest')
-                <a href="{{ route('vault.index', $courseFilter !== null ? ['course' => $courseFilter] : []) }}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Reset</a>
-            @endif
-        </form>
-
         <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
 
             <table class="w-full">
@@ -155,8 +122,6 @@
 
                                 <div class="flex items-center justify-end gap-2">
 
-                                    <x-star-button :action="route('vault.star', $file)" :starred="$file->starred_at !== null" :label="$file->original_name" />
-
                                     <a
                                         href="{{ route(
                                             'vault.download',
@@ -191,9 +156,9 @@
                                 colspan="5"
                                 class="p-12 text-center text-slate-500"
                             >
-                                @if ($category !== null || $courseFilter !== null)
-                                    <p class="font-semibold text-slate-800">No files match these filters.</p>
-                                    <p class="mt-2 text-sm">Try another category or course.</p>
+                                @if ($courseFilter !== null)
+                                    <p class="font-semibold text-slate-800">No files in this course.</p>
+                                    <p class="mt-2 text-sm">Try another course or view all files.</p>
                                     <a href="{{ route('vault.index') }}" class="mt-4 inline-flex text-sm font-semibold text-primary-700 hover:text-primary-800">Clear filters</a>
                                 @else
                                     <p class="font-semibold text-slate-800">Your vault is empty.</p>

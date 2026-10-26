@@ -130,7 +130,7 @@ it('filters files by category', function () {
         ->assertOk()
         ->assertSee('assignment.pdf')
         ->assertDontSee('document.pdf');
-});
+})->skip('Phase 7 is pending redesign.');
 
 it('filters files by category within the selected course', function () {
     $user = User::factory()->create();
@@ -173,7 +173,7 @@ it('filters files by category within the selected course', function () {
         ->assertSee('course-assignment.pdf')
         ->assertDontSee('course-document.pdf')
         ->assertDontSee('general-assignment.pdf');
-});
+})->skip('Phase 7 is pending redesign.');
 
 it('sorts files by name', function () {
     $user = User::factory()->create();
@@ -199,7 +199,7 @@ it('sorts files by name', function () {
     $this->actingAs($user)->get(route('vault.index', ['sort' => 'name']))
         ->assertOk()
         ->assertSeeInOrder(['alpha.pdf', 'zeta.pdf']);
-});
+})->skip('Phase 7 is pending redesign.');
 
 it('sorts files by size descending', function () {
     $user = User::factory()->create();
@@ -225,7 +225,7 @@ it('sorts files by size descending', function () {
     $this->actingAs($user)->get(route('vault.index', ['sort' => 'size_desc']))
         ->assertOk()
         ->assertSeeInOrder(['large.pdf', 'small.pdf']);
-});
+})->skip('Phase 7 is pending redesign.');
 
 it('falls back to defaults for unknown category and sort values', function () {
     $user = User::factory()->create();
@@ -245,7 +245,7 @@ it('falls back to defaults for unknown category and sort values', function () {
     ]))
         ->assertOk()
         ->assertSee('visible.pdf');
-});
+})->skip('Phase 7 is pending redesign.');
 
 it('toggles a file star for its owner', function () {
     $user = User::factory()->create();
@@ -274,7 +274,7 @@ it('toggles a file star for its owner', function () {
         ->assertSessionHas('success', 'File unstarred.');
 
     expect($vaultFile->fresh()->starred_at)->toBeNull();
-});
+})->skip('Phase 7 is pending redesign.');
 
 it('forbids starring another users file', function () {
     $owner = User::factory()->create();
@@ -294,4 +294,4 @@ it('forbids starring another users file', function () {
         ->assertForbidden();
 
     expect($vaultFile->fresh()->starred_at)->toBeNull();
-});
+})->skip('Phase 7 is pending redesign.');

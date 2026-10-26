@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Services\Encryption\EncryptionManager;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Note extends Model
@@ -15,15 +16,7 @@ class Note extends Model
         'title',
         'content',
         'course_id',
-        'starred_at',
     ];
-
-    protected function casts(): array
-    {
-        return [
-            'starred_at' => 'datetime',
-        ];
-    }
 
     public function user(): BelongsTo
     {
@@ -33,6 +26,11 @@ class Note extends Model
     public function course(): BelongsTo
     {
         return $this->belongsTo(Course::class);
+    }
+
+    public function sharedFolders(): BelongsToMany
+    {
+        return $this->belongsToMany(SharedFolder::class, 'shared_folder_notes')->withTimestamps();
     }
 
     public function setTitleAttribute(string $value): void

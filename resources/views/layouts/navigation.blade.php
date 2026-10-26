@@ -24,21 +24,6 @@
     </div>
 
     <nav class="flex-1 space-y-7 overflow-y-auto px-4 py-6" aria-label="StudentVault">
-        <form method="GET" action="{{ route('search.index') }}" class="pb-1">
-            <label for="navigation-search" class="sr-only">Search your vault</label>
-            <div class="relative">
-                <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400" aria-hidden="true">⌕</span>
-                <input
-                    id="navigation-search"
-                    type="search"
-                    name="q"
-                    value="{{ request()->routeIs('search.*') && is_string(request('q')) ? request('q') : '' }}"
-                    placeholder="Search vault"
-                    class="w-full rounded-xl border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm text-slate-700 shadow-sm focus:border-primary-700 focus:ring-primary-700"
-                >
-            </div>
-        </form>
-
         <div>
             <a href="{{ route('dashboard') }}" @class(['flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition', 'bg-primary-50 text-primary-700' => request()->routeIs('dashboard'), 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' => ! request()->routeIs('dashboard')]) @if(request()->routeIs('dashboard')) aria-current="page" @endif><i class="fa-solid fa-house w-5 text-center" aria-hidden="true"></i> Dashboard</a>
         </div>
@@ -49,7 +34,7 @@
             <a href="{{ route('notes.index') }}" @class(['flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition', 'bg-primary-50 text-primary-700' => request()->routeIs('notes.*'), 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' => ! request()->routeIs('notes.*')]) @if(request()->routeIs('notes.*')) aria-current="page" @endif><i class="fa-solid fa-note-sticky w-5 text-center" aria-hidden="true"></i> Notes</a>
             <a href="{{ route('vault.index') }}" @class(['flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition', 'bg-primary-50 text-primary-700' => request()->routeIs('vault.*'), 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' => ! request()->routeIs('vault.*')]) @if(request()->routeIs('vault.*')) aria-current="page" @endif><i class="fa-solid fa-folder-closed w-5 text-center" aria-hidden="true"></i> Files</a>
             <a href="{{ route('courses.index') }}" @class(['flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition', 'bg-primary-50 text-primary-700' => request()->routeIs('courses.*'), 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' => ! request()->routeIs('courses.*')]) @if(request()->routeIs('courses.*')) aria-current="page" @endif><i class="fa-solid fa-graduation-cap w-5 text-center" aria-hidden="true"></i> Courses</a>
-            <a href="{{ route('starred.index') }}" @class(['flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition', 'bg-primary-50 text-primary-700' => request()->routeIs('starred.*'), 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' => ! request()->routeIs('starred.*')]) @if(request()->routeIs('starred.*')) aria-current="page" @endif><i class="fa-solid fa-star w-5 text-center" aria-hidden="true"></i> Starred</a>
+            <a href="{{ route('shared-folders.index') }}" @class(['flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition', 'bg-primary-50 text-primary-700' => request()->routeIs('shared-folders.*'), 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' => ! request()->routeIs('shared-folders.*')]) @if(request()->routeIs('shared-folders.*')) aria-current="page" @endif><i class="fa-solid fa-people-group w-5 text-center" aria-hidden="true"></i> Shared Folders</a>
         </div>
         
         <!-- Personal -->
