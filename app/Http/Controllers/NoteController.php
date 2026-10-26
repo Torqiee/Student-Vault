@@ -3,14 +3,22 @@
 namespace App\Http\Controllers;
 
 use App\Models\Note;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class NoteController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): View
     {
         $courseFilter = $request->query('course');
+        $courseFilter = is_string($courseFilter) ? $courseFilter : null;
+
+        $sort = $request->query('sort', 'newest');
+        $sort = is_string($sort) ? $sort : 'newest';
+        $sort = in_array($sort, ['newest', 'oldest', 'title'], true) ? $sort : 'newest';
+
         $notes = $request->user()->notes()->with('course');
 
         if ($courseFilter === 'general') {
@@ -20,9 +28,15 @@ class NoteController extends Controller
             $notes->whereBelongsTo($course);
         }
 
-        $notes = $notes->latest()->get();
+        $notes = match ($sort) {
+            'oldest' => $notes->oldest()->get(),
+            'title' => $notes->get()
+                ->sortBy(fn (Note $note): string => mb_strtolower((string) $note->title))
+                ->values(),
+            default => $notes->latest()->get(),
+        };
 
-        return view('notes.index', compact('notes', 'courseFilter'));
+        return view('notes.index', compact('notes', 'courseFilter', 'sort'));
     }
 
     public function create(Request $request)
@@ -102,6 +116,27 @@ class NoteController extends Controller
 
         return redirect()
             ->route('notes.index')
-            ->with('success', 'Note deleted successfully.');
+            ->with('success', 'Note moved to Trash.');
+    }
+
+    public function toggleStar(Request $request, Note $note): RedirectResponse
+    {
+        abort_unless(
+            $note->user_id === $request->user()->id,
+            403
+        );
+
+        $isStarred = $note->starred_at === null;
+
+        $note->timestamps = false;
+        $note->update([
+            'starred_at' => $isStarred ? now() : null,
+        ]);
+        $note->timestamps = true;
+
+        return back()->with(
+            'success',
+            $isStarred ? 'Note starred.' : 'Note unstarred.'
+        );
     }
 }

@@ -5,14 +5,25 @@ namespace App\Models;
 use App\Services\Encryption\EncryptionManager;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Note extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'title',
         'content',
         'course_id',
+        'starred_at',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'starred_at' => 'datetime',
+        ];
+    }
 
     public function user(): BelongsTo
     {

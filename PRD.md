@@ -1343,11 +1343,13 @@ Status: **Completed**
 
 ## Phase 7 — Productivity
 
-- [ ] Search
-- [ ] Starred Notes
-- [ ] Starred Files
-- [ ] Filter files by category
-- [ ] Sort resources
+Status: **Completed**
+
+- [x] Search
+- [x] Starred Notes
+- [x] Starred Files
+- [x] Filter files by category
+- [x] Sort resources
 
 ---
 
@@ -1360,7 +1362,62 @@ Status: **Completed**
 
 ---
 
+## Phase 9 — Trash
 
+Status: **Completed**
+
+- [x] Soft delete Notes
+- [x] Soft delete Files
+- [x] Trash page
+- [x] Restore
+- [x] Permanent deletion
+- [x] Delete ciphertext after permanent deletion
+
+---
+
+## Phase 10 — Security Improvements
+
+- [ ] Laravel Policies
+- [ ] File detail page
+- [ ] Integrity status
+- [ ] Better upload validation
+- [ ] Error handling
+- [ ] Security review
+- [ ] Authorization testing
+
+---
+
+## Phase 11 — Benchmark
+
+Deferred until core application completion.
+
+- [ ] BenchmarkService
+- [ ] AES benchmark
+- [ ] DES benchmark
+- [ ] RC4 benchmark
+- [ ] Repeated measurements
+- [ ] Encryption time
+- [ ] Decryption time
+- [ ] Throughput
+- [ ] Storage overhead
+- [ ] Integrity verification
+- [ ] Benchmark dashboard
+- [ ] Charts
+- [ ] Result interpretation
+
+---
+
+## Phase 12 — Finalization
+
+- [ ] Responsive testing
+- [ ] UI polish
+- [ ] Functional testing
+- [ ] Security testing
+- [ ] Cross-user authorization testing
+- [ ] Final documentation
+- [ ] Screenshots
+- [ ] Demo preparation
+- [ ] Final report
 
 ---
 
@@ -1397,9 +1454,9 @@ StudentVault dianggap selesai ketika:
 
 ### Productivity
 
-- [ ] Search bekerja.
-- [ ] Starred bekerja.
-- [ ] Trash dan Restore bekerja.
+- [x] Search bekerja.
+- [x] Starred bekerja.
+- [x] Trash dan Restore bekerja.
 
 ### Security
 

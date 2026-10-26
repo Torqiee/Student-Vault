@@ -14,10 +14,10 @@
         @include('layouts.navigation')
         <div class="min-w-0 flex-1 lg:pl-64">
             <div class="flex h-16 items-center gap-4 border-b border-slate-200 bg-white px-4 sm:px-6 lg:hidden">
-                <button type="button" @click="sidebarOpen = true" class="rounded-lg p-2 text-slate-600 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500" aria-label="Open navigation" aria-controls="app-sidebar" :aria-expanded="sidebarOpen.toString()">
-                    <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                <button type="button" @click="sidebarOpen = true" class="rounded-lg p-2 text-slate-600 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-700" aria-label="Open navigation" aria-controls="app-sidebar" :aria-expanded="sidebarOpen.toString()">
+                    <i class="fa-solid fa-bars text-lg" aria-hidden="true"></i>
                 </button>
-                <a href="{{ route('dashboard') }}" class="text-base font-bold tracking-tight text-indigo-700">StudentVault</a>
+                <a href="{{ route('dashboard') }}" class="text-base font-bold tracking-tight text-primary-700">StudentVault</a>
             </div>
             @isset($header)
                 <header class="border-b border-slate-200 bg-white">
