@@ -12,8 +12,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PersonalVaultController;
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('login');
 });
+
 
 Route::get('/dashboard', DashboardController::class)->middleware(['auth', 'verified'])->name('dashboard');
 

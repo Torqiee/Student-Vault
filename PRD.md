@@ -1355,10 +1355,12 @@ Status: **Completed**
 
 ## Phase 8 — Personal Vault
 
-- [ ] Personal information model
-- [ ] Encrypted personal fields
-- [ ] Identity document integration
-- [ ] Personal Vault UI
+Status: **Completed**
+
+- [x] Personal information model
+- [x] Encrypted personal fields
+- [x] Identity document integration
+- [x] Personal Vault UI
 
 ---
 

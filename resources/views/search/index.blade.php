@@ -28,7 +28,6 @@
                     </a>
                 @endif
             </div>
-            <p class="mt-2 text-xs text-slate-500">Notes are decrypted only for this search request; no plaintext is stored.</p>
         </form>
 
         @if ($query === '')
