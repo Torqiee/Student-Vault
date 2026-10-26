@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\VaultFile;
 use App\Services\Vault\FileVaultService;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use RuntimeException;
@@ -16,6 +17,17 @@ class VaultFileController extends Controller
         $courseFilter = $request->query('course');
         $courseFilter = is_string($courseFilter) ? $courseFilter : null;
 
+        $category = $request->query('category');
+        $category = is_string($category) && in_array($category, ['documents', 'identity', 'assignments', 'videos'], true)
+            ? $category
+            : null;
+
+        $sort = $request->query('sort', 'newest');
+        $sort = is_string($sort) ? $sort : 'newest';
+        $sort = in_array($sort, ['newest', 'oldest', 'name', 'size_asc', 'size_desc'], true)
+            ? $sort
+            : 'newest';
+
         $files = $request->user()->vaultFiles()->with('course');
 
         if ($courseFilter === 'general') {
@@ -25,11 +37,21 @@ class VaultFileController extends Controller
             $files->whereBelongsTo($course);
         }
 
-        $files = $files->latest()->get();
+        if ($category !== null) {
+            $files->where('category', $category);
+        }
+
+        $files = match ($sort) {
+            'oldest' => $files->oldest()->get(),
+            'name' => $files->orderBy('original_name')->get(),
+            'size_asc' => $files->orderBy('original_size')->get(),
+            'size_desc' => $files->orderByDesc('original_size')->get(),
+            default => $files->latest()->get(),
+        };
 
         $courses = $request->user()->courses()->orderBy('name')->get();
 
-        return view('vault.index', compact('files', 'courses', 'courseFilter'));
+        return view('vault.index', compact('files', 'courses', 'courseFilter', 'category', 'sort'));
     }
 
     public function create(Request $request)
@@ -136,5 +158,18 @@ class VaultFileController extends Controller
         $vaultFile->update(['course_id' => $validated['course_id'] ?? null]);
 
         return back()->with('success', 'File course updated.');
+    }
+
+    public function toggleStar(Request $request, VaultFile $vaultFile): RedirectResponse
+    {
+        abort_unless($vaultFile->user_id === $request->user()->id, 403);
+
+        $isStarred = $vaultFile->starred_at === null;
+
+        $vaultFile->timestamps = false;
+        $vaultFile->update(['starred_at' => $isStarred ? now() : null]);
+        $vaultFile->timestamps = true;
+
+        return back()->with('success', $isStarred ? 'File starred.' : 'File unstarred.');
     }
 }

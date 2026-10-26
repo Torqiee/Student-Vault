@@ -1407,13 +1407,13 @@ Status: **Completed**
 
 ## Phase 7 — Productivity
 
-Status: **Pending redesign**
+Status: **Completed**
 
-- [ ] Search
-- [ ] Starred Notes
-- [ ] Starred Files
-- [ ] Filter files by category
-- [ ] Sort resources
+- [x] Search
+- [x] Starred Notes
+- [x] Starred Files
+- [x] Filter files by category
+- [x] Sort resources
 
 ---
 
@@ -1545,8 +1545,8 @@ StudentVault dianggap selesai ketika:
 
 ### Productivity
 
-- [ ] Search bekerja.
-- [ ] Starred bekerja.
+- [x] Search bekerja.
+- [x] Starred bekerja.
 - [x] Trash dan Restore bekerja.
 
 ### Security
