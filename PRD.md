@@ -85,6 +85,7 @@ StudentVault harus:
 11. Mengimplementasikan AES, DES, dan RC4.
 12. Menyediakan evaluasi performa ketiga cipher pada tahap akhir pengembangan.
 13. Memungkinkan kolaborasi terbatas melalui Shared Folder berbasis undangan.
+14. Memungkinkan pengguna meminta akses ke data privat pengguna lain melalui persetujuan pemilik dan pengelolaan kunci yang aman.
 
 ---
 
@@ -143,7 +144,7 @@ User B
 └── Courses B
 ```
 
-User A tidak boleh mengakses resource milik User B, kecuali note atau file yang secara eksplisit dimasukkan ke Shared Folder dan User A telah menerima undangannya. Akses terbatas pada isi folder tersebut; kepemilikan resource tetap pada pemilik asal.
+User A tidak boleh mengakses resource milik User B, kecuali note atau file yang secara eksplisit dimasukkan ke Shared Folder dan User A telah menerima undangannya, atau data privat tertentu yang aksesnya diminta User A dan disetujui secara eksplisit oleh User B. Akses terbatas pada resource yang dibagikan atau disetujui; kepemilikan tetap pada pemilik asal.
 
 ---
 
@@ -805,9 +806,26 @@ Data sensitif menggunakan AES.
 Personal Vault harus:
 
 - Membutuhkan authentication.
-- Hanya dapat diakses owner.
+- Secara default hanya dapat diakses owner; pengecualian hanya berlaku untuk data tertentu yang aksesnya disetujui owner melalui mekanisme permintaan akses.
 - Menyimpan field sensitif dalam ciphertext.
 - Tidak mengekspos plaintext di database.
+
+---
+
+## 18.3 Private Data Access Requests — Target Assignment 2
+
+Sebagai lanjutan tugas sebelumnya, pengguna dapat meminta izin untuk melihat data privat milik pengguna lain, termasuk gambar dan dokumen. Mekanisme ini terpisah dari keanggotaan Shared Folder: permintaan akses tidak otomatis membuka seluruh Personal Vault atau resource lain milik pemilik data.
+
+Alur target:
+
+1. Peminta yang sudah login mengirim permintaan kepada pemilik data untuk resource privat tertentu.
+2. Pemilik dapat menyetujui atau menolak permintaan. Sebelum disetujui, peminta tidak dapat melihat data, gambar, dokumen, atau kunci terkait.
+3. Saat menyetujui, pemilik menghasilkan kunci simetris untuk membagikan data yang disetujui kepada peminta. Data yang dibagikan harus tetap terenkripsi saat disimpan dan hanya dapat dibuka oleh penerima yang berwenang.
+4. Kunci simetris didistribusikan kepada peminta melalui sarana lain, misalnya email atau WhatsApp. Sebelum dikirim, kunci tersebut harus dienkripsi menggunakan kriptografi asimetris untuk peminta; kunci simetris mentah tidak boleh dikirim sebagai plaintext melalui saluran tersebut.
+5. Kunci simetris yang disimpan di sistem harus dilindungi saat tersimpan. Materi kunci dan private key tidak boleh muncul di log, URL, atau respons yang dapat diakses pengguna lain.
+6. Peminta hanya dapat melihat data yang disetujui setelah autentikasi, verifikasi izin akses, dan proses dekripsi yang sah. Pemilik dapat mencabut akses; permintaan yang ditolak atau dicabut tidak lagi memberikan akses.
+
+Implementasi nantinya harus menetapkan cara pengelolaan pasangan kunci asimetris dan penyimpanan kunci terenkripsi tanpa mengubah prinsip privacy by default atau menyimpan data asli sebagai plaintext permanen.
 
 ---
 
@@ -942,7 +960,7 @@ File yang gagal integrity verification tidak boleh dianggap valid.
 
 # 22. Authorization Requirements
 
-Setiap protected resource harus mempunyai ownership validation. Shared Folder menambah pengecualian berbasis keanggotaan aktif untuk akses baca/download pada item yang sengaja dibagikan.
+Setiap protected resource harus mempunyai ownership validation. Shared Folder menambah pengecualian berbasis keanggotaan aktif untuk akses baca/download pada item yang sengaja dibagikan. Persetujuan permintaan akses data privat menambah pengecualian terbatas pada resource dan peminta yang disetujui pemilik.
 
 Contoh:
 
@@ -965,6 +983,7 @@ Berlaku untuk:
 - Personal Vault
 - Trash
 - Shared Folders, invitations, memberships, dan item yang dibagikan
+- Permintaan akses data privat, persetujuan, dan kunci terkait
 
 Tidak boleh hanya mengandalkan resource ID di URL.
 
@@ -1098,7 +1117,7 @@ Protected data hanya dapat diakses authenticated user.
 
 ### SR-02 Authorization
 
-User hanya dapat mengakses resource miliknya, kecuali akses baca/download yang diberikan secara eksplisit melalui keanggotaan aktif pada Shared Folder. Hak edit/hapus resource asli tetap pada pemilik resource.
+User hanya dapat mengakses resource miliknya, kecuali akses baca/download yang diberikan secara eksplisit melalui keanggotaan aktif pada Shared Folder atau persetujuan pemilik atas permintaan data privat tertentu. Hak edit/hapus resource asli tetap pada pemilik resource.
 
 ### SR-03 Encryption at Rest
 
@@ -1135,6 +1154,10 @@ AES-GCM juga menggunakan authentication tag untuk autentikasi ciphertext AES.
 ### SR-10 Secure Failure
 
 Jika decryption atau integrity verification gagal, aplikasi tidak boleh mengembalikan file seolah-olah valid.
+
+### SR-11 Shared Key Protection
+
+Kunci simetris untuk akses data privat harus dilindungi saat disimpan dan dienkripsi secara asimetris sebelum didistribusikan kepada peminta melalui saluran lain. Kunci mentah tidak boleh dikirim sebagai plaintext atau diekspos kepada pihak yang tidak berwenang.
 
 ---
 
@@ -1456,7 +1479,26 @@ Status: **Completed**
 
 ---
 
-## Phase 11 — Security Improvements
+## Phase 10A — Private Data Access and Key Management
+
+Status: **Planned — Assignment 2**
+
+<!-- 1.1 -->
+- [ ] Permintaan akses ke data privat pengguna lain, termasuk gambar dan dokumen
+- [ ] Persetujuan, penolakan, dan pencabutan akses oleh pemilik data
+- [ ] Pembuatan kunci simetris untuk data yang disetujui
+
+<!-- 1.2 -->
+- [ ] Distribusi kunci melalui saluran lain dengan perlindungan enkripsi asimetris
+- [ ] Penyimpanan kunci simetris secara aman di sistem
+
+<!-- 1.3 -->
+- [ ] Verifikasi autentikasi, izin per resource, dan akses hanya untuk peminta yang disetujui
+- [ ] Pengujian akses sebelum persetujuan, setelah penolakan/pencabutan, dan lintas pengguna
+
+---
+
+<!-- ## Phase 11 — Security Improvements
 
 - [ ] Laravel Policies
 - [ ] File detail page
@@ -1464,11 +1506,11 @@ Status: **Completed**
 - [ ] Better upload validation
 - [ ] Error handling
 - [ ] Security review
-- [ ] Authorization testing
+- [ ] Authorization testing -->
 
 ---
 
-## Phase 12 — Benchmark
+<!-- ## Phase 12 — Benchmark
 
 Deferred until core application completion.
 
@@ -1484,11 +1526,11 @@ Deferred until core application completion.
 - [ ] Integrity verification
 - [ ] Benchmark dashboard
 - [ ] Charts
-- [ ] Result interpretation
+- [ ] Result interpretation -->
 
 ---
 
-## Phase 13 — Finalization
+<!-- ## Phase 13 — Finalization
 
 - [ ] Responsive testing
 - [ ] UI polish
@@ -1498,7 +1540,7 @@ Deferred until core application completion.
 - [ ] Final documentation
 - [ ] Screenshots
 - [ ] Demo preparation
-- [ ] Final report
+- [ ] Final report -->
 
 ---
 
@@ -1542,6 +1584,14 @@ StudentVault dianggap selesai ketika:
 - [x] Owner dapat mencabut akses dan anggota dapat keluar; akses langsung berhenti dan kontribusinya dilepas dari folder.
 - [x] Menghapus folder tidak menghapus Notes/Files asli.
 - [x] Guest, nonanggota, dan pengguna yang menebak ID tidak dapat mengakses isi folder.
+
+### Private Data Access and Key Management
+
+- [ ] Pengguna dapat meminta akses ke data privat tertentu milik pengguna lain, termasuk gambar dan dokumen.
+- [ ] Pemilik dapat menyetujui, menolak, atau mencabut akses tanpa membuka seluruh data privatnya.
+- [ ] Data yang disetujui dibagikan menggunakan kunci simetris yang dibuat pemilik.
+- [ ] Kunci simetris yang didistribusikan melalui saluran lain telah dienkripsi secara asimetris dan disimpan secara aman di sistem.
+- [ ] Hanya peminta yang disetujui dapat membuka resource terkait; penolakan atau pencabutan menghentikan akses.
 
 ### Productivity
 
