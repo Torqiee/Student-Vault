@@ -1484,9 +1484,9 @@ Status: **Completed**
 Status: **Planned — Assignment 2**
 
 <!-- 1.1 -->
-- [ ] Permintaan akses ke data privat pengguna lain, termasuk gambar dan dokumen
-- [ ] Persetujuan, penolakan, dan pencabutan akses oleh pemilik data
-- [ ] Pembuatan kunci simetris untuk data yang disetujui
+- [x] Permintaan akses ke data privat pengguna lain, termasuk gambar dan dokumen
+- [x] Persetujuan, penolakan, dan pencabutan akses oleh pemilik data
+- [x] Pembuatan kunci simetris untuk data yang disetujui
 
 <!-- 1.2 -->
 - [ ] Distribusi kunci melalui saluran lain dengan perlindungan enkripsi asimetris
