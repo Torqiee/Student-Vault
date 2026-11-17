@@ -34,6 +34,7 @@
                                 @endif
                             </div>
                             <p class="mt-1 text-xs text-slate-500">Updated {{ $entry['updated_at']?->format('d M Y, H:i') ?? '—' }}</p>
+                            <p class="mt-1 text-xs text-slate-500">Item ID: {{ $entry['id'] }}</p>
                         </div>
                         <div class="flex flex-wrap gap-2">
                             <a href="{{ route('personal-vault.edit', $entry['id']) }}" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Edit</a>

@@ -118,6 +118,7 @@
                                 <div class="text-sm text-slate-400">
                                     {{ $file->mime_type }}
                                 </div>
+                                <div class="text-xs text-slate-400">Item ID: {{ $file->id }}</div>
 
                             </td>
 
