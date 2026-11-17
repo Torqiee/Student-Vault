@@ -84,6 +84,8 @@ StudentVault harus:
 10. Menyediakan dashboard yang memberikan ringkasan isi StudentVault.
 11. Mengimplementasikan AES, DES, dan RC4.
 12. Menyediakan evaluasi performa ketiga cipher pada tahap akhir pengembangan.
+13. Memungkinkan kolaborasi terbatas melalui Shared Folder berbasis undangan.
+14. Memungkinkan pengguna meminta akses ke data privat pengguna lain melalui persetujuan pemilik dan pengelolaan kunci yang aman.
 
 ---
 
@@ -93,7 +95,7 @@ StudentVault bukan:
 
 - Public file sharing service.
 - Social media.
-- Collaboration platform.
+- Collaboration platform dengan akses publik atau kolaborasi di luar Shared Folder yang diundang.
 - Public cloud storage.
 - File encryption tool yang meminta pengguna memilih algoritma.
 - Production password manager.
@@ -142,7 +144,7 @@ User B
 └── Courses B
 ```
 
-User A tidak boleh mengakses resource milik User B.
+User A tidak boleh mengakses resource milik User B, kecuali note atau file yang secara eksplisit dimasukkan ke Shared Folder dan User A telah menerima undangannya, atau data privat tertentu yang aksesnya diminta User A dan disetujui secara eksplisit oleh User B. Akses terbatas pada resource yang dibagikan atau disetujui; kepemilikan tetap pada pemilik asal.
 
 ---
 
@@ -570,6 +572,7 @@ MY SPACE
 ├── Notes
 ├── Files
 ├── Courses
+├── Shared Folders
 └── Starred
 
 PERSONAL
@@ -693,6 +696,49 @@ Files
 
 ---
 
+## 15.6 Shared Folders
+
+Shared Folder adalah ruang bersama privat untuk Notes dan Files milik beberapa pengguna. Setiap folder memiliki satu owner. Folder tidak mempunyai tautan publik dan hanya dapat dibuka owner atau anggota yang sudah menerima undangan.
+
+Alur utama:
+
+1. User membuat Shared Folder dengan nama dan deskripsi opsional.
+2. Owner mengundang pengguna lain menggunakan alamat email akun StudentVault yang terdaftar.
+3. Penerima melihat undangan di aplikasi dan menerima email berisi tautan menuju halaman undangan. Tautan email tidak memberikan akses tanpa login ke akun dengan alamat email yang diundang.
+4. Penerima dapat **Accept** atau **Decline**. Hanya undangan yang diterima menghasilkan keanggotaan aktif.
+5. Owner dan anggota aktif dapat memasukkan Notes atau Files milik mereka sendiri ke folder yang sama.
+6. Anggota aktif dapat membaca note dan mengunduh file yang ada di folder, termasuk kontribusi pengguna lain.
+
+Folder menampilkan nama, owner, daftar anggota, undangan yang masih pending (untuk owner), serta daftar Notes dan Files beserta kontributornya.
+
+## 15.7 Invitations and Membership
+
+- Satu undangan ditujukan pada satu alamat email akun terdaftar. Pengguna tidak dapat mengundang dirinya sendiri atau membuat undangan aktif yang duplikat.
+- Undangan memiliki status `pending`, `accepted`, `declined`, atau `revoked`, waktu pembuatan, dan waktu respons.
+- Hanya akun dengan email yang diundang dapat menerima atau menolak undangan. Undangan `declined` atau `revoked` tidak dapat dipakai kembali; owner dapat mengirim undangan baru.
+- Owner dapat membatalkan undangan pending dan menghapus anggota. Anggota dapat keluar dari folder. Perubahan keanggotaan langsung menghentikan akses ke isi folder.
+- Saat anggota keluar atau dihapus, semua item yang ia kontribusikan dilepas dari folder tanpa menghapus resource aslinya.
+- Hanya owner dapat mengubah nama/deskripsi folder, mengelola undangan dan anggota, atau menghapus folder. Anggota tidak dapat mengundang pengguna lain.
+
+## 15.8 Content and Ownership
+
+- Item folder berupa referensi ke Note atau VaultFile yang sudah ada, bukan salinan plaintext atau ciphertext baru. Satu item dapat berada di lebih dari satu Shared Folder jika pemiliknya memilih demikian.
+- Hanya pemilik Note atau VaultFile yang dapat menambahkannya ke folder dan mengubah atau menghapus resource aslinya. Anggota lain mendapat akses baca/download melalui folder, tanpa hak mengedit atau menghapus resource tersebut.
+- Owner dapat mengeluarkan item siapa pun dari folder tanpa menghapus resource aslinya. Kontributor dapat mengeluarkan item miliknya sendiri.
+- Jika Note atau VaultFile dipindahkan ke Trash atau dihapus permanen, relasinya dengan Shared Folder dilepas. Restore tidak otomatis membagikan kembali item tersebut.
+- Menghapus Shared Folder hanya menghapus folder, undangan, keanggotaan, dan relasi item; Notes dan Files asli tetap dimiliki serta disimpan oleh masing-masing pengguna.
+- Personal Vault tidak dapat dimasukkan ke Shared Folder.
+
+## 15.9 Shared Folder Security
+
+- Setiap akses folder, daftar item, detail note, dan download file harus memeriksa authentication serta status keanggotaan aktif. Owner selalu memiliki akses ke folder miliknya.
+- Pemeriksaan item harus memastikan item tersebut masih terhubung ke folder dan pemilik item masih merupakan anggota aktif atau owner. Menebak ID folder/item tidak boleh membuka data.
+- Route Notes dan Files pribadi tetap owner-only. Akses anggota terhadap kontribusi pengguna lain menggunakan route Shared Folder yang memverifikasi folder, keanggotaan, dan relasi item pada setiap request.
+- Enkripsi yang sudah ada tetap berlaku. Backend hanya mendekripsi setelah authorization lolos; plaintext tidak disimpan permanen dan file tetap berada di private storage.
+- Email undangan hanya berisi informasi undangan dan tautan login/halaman undangan, bukan isi note, file, atau kunci enkripsi.
+
+---
+
 # 16. Search
 
 ## 16.1 Objective
@@ -760,9 +806,26 @@ Data sensitif menggunakan AES.
 Personal Vault harus:
 
 - Membutuhkan authentication.
-- Hanya dapat diakses owner.
+- Secara default hanya dapat diakses owner; pengecualian hanya berlaku untuk data tertentu yang aksesnya disetujui owner melalui mekanisme permintaan akses.
 - Menyimpan field sensitif dalam ciphertext.
 - Tidak mengekspos plaintext di database.
+
+---
+
+## 18.3 Private Data Access Requests — Target Assignment 2
+
+Sebagai lanjutan tugas sebelumnya, pengguna dapat meminta izin untuk melihat data privat milik pengguna lain, termasuk gambar dan dokumen. Mekanisme ini terpisah dari keanggotaan Shared Folder: permintaan akses tidak otomatis membuka seluruh Personal Vault atau resource lain milik pemilik data.
+
+Alur target:
+
+1. Peminta yang sudah login mengirim permintaan kepada pemilik data untuk resource privat tertentu.
+2. Pemilik dapat menyetujui atau menolak permintaan. Sebelum disetujui, peminta tidak dapat melihat data, gambar, dokumen, atau kunci terkait.
+3. Saat menyetujui, pemilik menghasilkan kunci simetris untuk membagikan data yang disetujui kepada peminta. Data yang dibagikan harus tetap terenkripsi saat disimpan dan hanya dapat dibuka oleh penerima yang berwenang.
+4. Kunci simetris didistribusikan kepada peminta melalui sarana lain, misalnya email atau WhatsApp. Sebelum dikirim, kunci tersebut harus dienkripsi menggunakan kriptografi asimetris untuk peminta; kunci simetris mentah tidak boleh dikirim sebagai plaintext melalui saluran tersebut.
+5. Kunci simetris yang disimpan di sistem harus dilindungi saat tersimpan. Materi kunci dan private key tidak boleh muncul di log, URL, atau respons yang dapat diakses pengguna lain.
+6. Peminta hanya dapat melihat data yang disetujui setelah autentikasi, verifikasi izin akses, dan proses dekripsi yang sah. Pemilik dapat mencabut akses; permintaan yang ditolak atau dicabut tidak lagi memberikan akses.
+
+Implementasi nantinya harus menetapkan cara pengelolaan pasangan kunci asimetris dan penyimpanan kunci terenkripsi tanpa mengubah prinsip privacy by default atau menyimpan data asli sebagai plaintext permanen.
 
 ---
 
@@ -897,7 +960,7 @@ File yang gagal integrity verification tidak boleh dianggap valid.
 
 # 22. Authorization Requirements
 
-Setiap protected resource harus mempunyai ownership validation.
+Setiap protected resource harus mempunyai ownership validation. Shared Folder menambah pengecualian berbasis keanggotaan aktif untuk akses baca/download pada item yang sengaja dibagikan. Persetujuan permintaan akses data privat menambah pengecualian terbatas pada resource dan peminta yang disetujui pemilik.
 
 Contoh:
 
@@ -919,6 +982,8 @@ Berlaku untuk:
 - Starred resources
 - Personal Vault
 - Trash
+- Shared Folders, invitations, memberships, dan item yang dibagikan
+- Permintaan akses data privat, persetujuan, dan kunci terkait
 
 Tidak boleh hanya mengandalkan resource ID di URL.
 
@@ -997,7 +1062,13 @@ users
  │
  ├── courses
  │
- └── personal_data
+ ├── personal_data
+ └── shared_folders
+
+shared_folder_invitations
+shared_folder_memberships
+shared_folder_notes
+shared_folder_files
 ```
 
 Relationships:
@@ -1006,7 +1077,10 @@ Relationships:
 User
 ├── hasMany Notes
 ├── hasMany VaultFiles
-└── hasMany Courses
+├── hasMany Courses
+├── hasMany PersonalVaultEntries
+├── hasMany SharedFolders (sebagai owner)
+└── belongsToMany SharedFolders (sebagai anggota)
 
 Course
 ├── belongsTo User
@@ -1020,7 +1094,16 @@ Note
 VaultFile
 ├── belongsTo User
 └── belongsTo Course (optional)
+
+SharedFolder
+├── belongsTo User (owner)
+├── hasMany Invitations
+├── belongsToMany Users (anggota aktif)
+├── belongsToMany Notes (item bersama)
+└── belongsToMany VaultFiles (item bersama)
 ```
+
+Shared Folder memerlukan tabel untuk folder, undangan, keanggotaan, relasi note, dan relasi file. Relasi item harus unik per folder/resource dan dihapus saat resource masuk Trash atau keanggotaan kontributor berakhir.
 
 ---
 
@@ -1034,7 +1117,7 @@ Protected data hanya dapat diakses authenticated user.
 
 ### SR-02 Authorization
 
-User hanya dapat mengakses resource miliknya.
+User hanya dapat mengakses resource miliknya, kecuali akses baca/download yang diberikan secara eksplisit melalui keanggotaan aktif pada Shared Folder atau persetujuan pemilik atas permintaan data privat tertentu. Hak edit/hapus resource asli tetap pada pemilik resource.
 
 ### SR-03 Encryption at Rest
 
@@ -1071,6 +1154,10 @@ AES-GCM juga menggunakan authentication tag untuk autentikasi ciphertext AES.
 ### SR-10 Secure Failure
 
 Jika decryption atau integrity verification gagal, aplikasi tidak boleh mengembalikan file seolah-olah valid.
+
+### SR-11 Shared Key Protection
+
+Kunci simetris untuk akses data privat harus dilindungi saat disimpan dan dienkripsi secara asimetris sebelum didistribusikan kepada peminta melalui saluran lain. Kunci mentah tidak boleh dikirim sebagai plaintext atau diekspos kepada pihak yang tidak berwenang.
 
 ---
 
@@ -1343,35 +1430,75 @@ Status: **Completed**
 
 ## Phase 7 — Productivity
 
-- [ ] Search
-- [ ] Starred Notes
-- [ ] Starred Files
-- [ ] Filter files by category
-- [ ] Sort resources
+Status: **Completed**
+
+- [x] Search
+- [x] Starred Notes
+- [x] Starred Files
+- [x] Filter files by category
+- [x] Sort resources
 
 ---
 
 ## Phase 8 — Personal Vault
 
-- [ ] Personal information model
-- [ ] Encrypted personal fields
-- [ ] Identity document integration
-- [ ] Personal Vault UI
+Status: **Completed**
+
+- [x] Personal information model
+- [x] Encrypted personal fields
+- [x] Identity document integration
+- [x] Personal Vault UI
 
 ---
 
 ## Phase 9 — Trash
 
-- [ ] Soft delete Notes
-- [ ] Soft delete Files
-- [ ] Trash page
-- [ ] Restore
-- [ ] Permanent deletion
-- [ ] Delete ciphertext after permanent deletion
+Status: **Completed**
+
+- [x] Soft delete Notes
+- [x] Soft delete Files
+- [x] Trash page
+- [x] Restore
+- [x] Permanent deletion
+- [x] Delete ciphertext after permanent deletion
 
 ---
 
-## Phase 10 — Security Improvements
+## Phase 10 — Shared Folders
+
+Status: **Completed**
+
+- [x] Shared Folder model, relasi item, dan CRUD owner
+- [x] Undangan berdasarkan email akun terdaftar dan notifikasi email/in-app
+- [x] Accept/Decline invitation dan pengelolaan anggota
+- [x] Kontribusi Notes/Files dari owner dan anggota aktif
+- [x] Akses baca/download bersama dengan authorization dan dekripsi aman
+- [x] Pencabutan akses serta penghapusan relasi saat keluar, Trash, atau hapus folder
+- [x] Shared Folders UI dan navigasi
+- [x] Pengujian alur undangan, kepemilikan, dan akses lintas pengguna
+
+---
+
+## Phase 10A — Private Data Access and Key Management
+
+Status: **In Progress — Assignment 2 (1.1 completed)**
+
+<!-- 1.1 -->
+- [x] Permintaan akses ke data privat pengguna lain, termasuk gambar dan dokumen
+- [x] Persetujuan, penolakan, dan pencabutan akses oleh pemilik data
+- [x] Pembuatan kunci simetris untuk data yang disetujui
+
+<!-- 1.2 -->
+- [ ] Distribusi kunci melalui saluran lain dengan perlindungan enkripsi asimetris
+- [ ] Penyimpanan kunci simetris secara aman di sistem
+
+<!-- 1.3 -->
+- [ ] Verifikasi autentikasi, izin per resource, dan akses hanya untuk peminta yang disetujui
+- [ ] Pengujian akses sebelum persetujuan, setelah penolakan/pencabutan, dan lintas pengguna
+
+---
+
+<!-- ## Phase 11 — Security Improvements
 
 - [ ] Laravel Policies
 - [ ] File detail page
@@ -1379,11 +1506,11 @@ Status: **Completed**
 - [ ] Better upload validation
 - [ ] Error handling
 - [ ] Security review
-- [ ] Authorization testing
+- [ ] Authorization testing -->
 
 ---
 
-## Phase 11 — Benchmark
+<!-- ## Phase 12 — Benchmark
 
 Deferred until core application completion.
 
@@ -1399,11 +1526,11 @@ Deferred until core application completion.
 - [ ] Integrity verification
 - [ ] Benchmark dashboard
 - [ ] Charts
-- [ ] Result interpretation
+- [ ] Result interpretation -->
 
 ---
 
-## Phase 12 — Finalization
+<!-- ## Phase 13 — Finalization
 
 - [ ] Responsive testing
 - [ ] UI polish
@@ -1413,7 +1540,7 @@ Deferred until core application completion.
 - [ ] Final documentation
 - [ ] Screenshots
 - [ ] Demo preparation
-- [ ] Final report
+- [ ] Final report -->
 
 ---
 
@@ -1448,11 +1575,29 @@ StudentVault dianggap selesai ketika:
 - [x] Notes dapat diorganisasi berdasarkan Course.
 - [x] Files dapat diorganisasi berdasarkan Course.
 
+### Shared Folders
+
+- [x] Owner dapat membuat folder dan mengundang akun lain melalui email.
+- [x] Penerima dapat menerima atau menolak undangan; undangan pending tidak memberi akses.
+- [x] Anggota aktif dapat menambahkan Notes/Files miliknya dan membaca/mengunduh kontribusi anggota lain.
+- [x] Anggota tidak dapat mengedit atau menghapus resource asli milik pengguna lain.
+- [x] Owner dapat mencabut akses dan anggota dapat keluar; akses langsung berhenti dan kontribusinya dilepas dari folder.
+- [x] Menghapus folder tidak menghapus Notes/Files asli.
+- [x] Guest, nonanggota, dan pengguna yang menebak ID tidak dapat mengakses isi folder.
+
+### Private Data Access and Key Management
+
+- [ ] Pengguna dapat meminta akses ke data privat tertentu milik pengguna lain, termasuk gambar dan dokumen.
+- [ ] Pemilik dapat menyetujui, menolak, atau mencabut akses tanpa membuka seluruh data privatnya.
+- [ ] Data yang disetujui dibagikan menggunakan kunci simetris yang dibuat pemilik.
+- [ ] Kunci simetris yang didistribusikan melalui saluran lain telah dienkripsi secara asimetris dan disimpan secara aman di sistem.
+- [ ] Hanya peminta yang disetujui dapat membuka resource terkait; penolakan atau pencabutan menghentikan akses.
+
 ### Productivity
 
-- [ ] Search bekerja.
-- [ ] Starred bekerja.
-- [ ] Trash dan Restore bekerja.
+- [x] Search bekerja.
+- [x] Starred bekerja.
+- [x] Trash dan Restore bekerja.
 
 ### Security
 
@@ -1508,6 +1653,6 @@ Final StudentVault:
 
 StudentVault harus terasa sebagai **private academic workspace untuk mahasiswa**, bukan sekadar demonstrasi algoritma enkripsi.
 
-Kriptografi bekerja di belakang aplikasi, sedangkan pengguna berinteraksi dengan fitur yang familiar seperti Notes, Courses, Files, Search, Starred, dan Trash.
+Kriptografi bekerja di belakang aplikasi, sedangkan pengguna berinteraksi dengan fitur yang familiar seperti Notes, Courses, Files, Shared Folders, Search, Starred, dan Trash.
 
 Benchmark AES/DES/RC4 menjadi bagian evaluasi teknis di tahap akhir, bukan fokus utama pengalaman pengguna.

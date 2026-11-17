@@ -7,6 +7,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -31,6 +32,26 @@ class User extends Authenticatable
     public function courses(): HasMany
     {
         return $this->hasMany(Course::class);
+    }
+
+    public function personalVaultEntries(): HasMany
+    {
+        return $this->hasMany(PersonalVaultEntry::class);
+    }
+
+    public function ownedSharedFolders(): HasMany
+    {
+        return $this->hasMany(SharedFolder::class, 'owner_id');
+    }
+
+    public function sharedFolders(): BelongsToMany
+    {
+        return $this->belongsToMany(SharedFolder::class, 'shared_folder_memberships')->withTimestamps();
+    }
+
+    public function sharedFolderInvitations(): HasMany
+    {
+        return $this->hasMany(SharedFolderInvitation::class, 'invitee_id');
     }
 
     /**

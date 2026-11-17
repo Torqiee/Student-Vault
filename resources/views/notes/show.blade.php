@@ -9,7 +9,7 @@
                 href="{{ route('notes.index') }}"
                 class="text-sm text-gray-600 hover:text-gray-900"
             >
-                ← Back to Notes
+                <i class="fa-solid fa-arrow-left mr-1" aria-hidden="true"></i> Back to Notes
             </a>
         </div>
     </x-slot>
@@ -17,12 +17,16 @@
     <div class="py-12">
         <div class="mx-auto max-w-3xl sm:px-6 lg:px-8">
 
+            @if (session('success'))
+                <div class="mb-4 rounded-lg bg-green-100 p-4 text-green-700" role="status">{{ session('success') }}</div>
+            @endif
+
             <div class="rounded-xl bg-white p-6 shadow-sm">
 
                 <p class="mb-4 text-sm text-gray-500">
                     Course:
                     @if ($note->course)
-                        <a href="{{ route('courses.show', $note->course) }}" class="font-medium text-indigo-600 hover:underline">{{ $note->course->name }}</a>
+                        <a href="{{ route('courses.show', $note->course) }}" class="font-medium text-primary-700 hover:underline">{{ $note->course->name }}</a>
                     @else
                         General
                     @endif
@@ -35,29 +39,22 @@
                 </div>
 
                 <div class="mt-6 flex justify-end gap-3">
+                    <x-star-button :action="route('notes.star', $note)" :starred="$note->starred_at !== null" :label="$note->title" />
 
                     <a
                         href="{{ route('notes.edit', $note) }}"
-                        class="rounded-lg bg-indigo-600 px-4 py-2 text-white"
+                        class="rounded-lg bg-primary-700 px-4 py-2 text-white"
                     >
                         Edit
                     </a>
 
-                    <form
-                        method="POST"
-                        action="{{ route('notes.destroy', $note) }}"
-                        onsubmit="return confirm('Delete this note?')"
-                    >
-                        @csrf
-                        @method('DELETE')
-
-                        <button
-                            type="submit"
-                            class="rounded-lg bg-red-600 px-4 py-2 text-white"
-                        >
-                            Delete
-                        </button>
-                    </form>
+                    <x-confirm-action
+                        :name="'trash-note-'.$note->id"
+                        :action="route('notes.destroy', $note)"
+                        title="Move this note to Trash?"
+                        message="You can restore this note from Trash later."
+                        confirm-label="Move to Trash"
+                    />
 
                 </div>
 

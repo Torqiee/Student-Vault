@@ -78,7 +78,7 @@
 
                         <button
                             type="submit"
-                            class="rounded-lg bg-indigo-600 px-4 py-2 text-white"
+                            class="rounded-lg bg-primary-700 px-4 py-2 text-white"
                         >
                             Save Note
                         </button>

@@ -1,0 +1,14 @@
+<x-app-layout>
+    <x-slot name="header">
+        <h2 class="text-xl font-semibold text-slate-900">Add to Personal Vault</h2>
+    </x-slot>
+
+    <div class="py-10">
+        <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+            <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+                <p class="mb-6 text-sm leading-6 text-slate-600">Please fill in the details below to add an entry to your personal vault.</p>
+                @include('personal-vault.partials.form', ['entry' => null])
+            </div>
+        </div>
+    </div>
+</x-app-layout>

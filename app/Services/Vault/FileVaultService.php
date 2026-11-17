@@ -7,6 +7,7 @@ use App\Models\VaultFile;
 use App\Services\Encryption\EncryptionManager;
 use App\Services\Encryption\EncryptionPolicy;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -142,7 +143,30 @@ class FileVaultService
 
     public function delete(VaultFile $vaultFile): void
     {
-        Storage::disk('local')->delete('vault/'.$vaultFile->stored_name);
-        $vaultFile->delete();
+        DB::transaction(function () use ($vaultFile): void {
+            $vaultFile->sharedFolders()->detach();
+            $vaultFile->delete();
+        });
+    }
+
+    public function restore(VaultFile $vaultFile): void
+    {
+        if (! Storage::disk('local')->exists('vault/'.$vaultFile->stored_name)) {
+            throw new RuntimeException('Encrypted file does not exist.');
+        }
+
+        $vaultFile->restore();
+    }
+
+    public function permanentlyDelete(VaultFile $vaultFile): void
+    {
+        $path = 'vault/'.$vaultFile->stored_name;
+        $disk = Storage::disk('local');
+
+        if ($disk->exists($path) && ! $disk->delete($path)) {
+            throw new RuntimeException('Unable to delete encrypted file.');
+        }
+
+        $vaultFile->forceDelete();
     }
 }

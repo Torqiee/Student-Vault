@@ -1,5 +1,6 @@
 ## About Laravel
 
+Buat branch baru di github, dev.(nama). Nanti push ke branch itu
 Buat .env baru, kemudian tambahkan variable ini :
 
 - STUDENTVAULT_AES_KEY=+jNNPKaItlaRFB9hclEX/mmw8T+7Igdxbn9Ya8fqVaE=
