@@ -1481,7 +1481,7 @@ Status: **Completed**
 
 ## Phase 10A — Private Data Access and Key Management
 
-Status: **Planned — Assignment 2**
+Status: **In Progress — Assignment 2 (1.1 completed)**
 
 <!-- 1.1 -->
 - [x] Permintaan akses ke data privat pengguna lain, termasuk gambar dan dokumen

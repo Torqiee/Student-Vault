@@ -11,6 +11,16 @@ class VaultFile extends Model
 {
     use SoftDeletes;
 
+    protected static function booted(): void
+    {
+        static::deleting(function (self $file): void {
+            PrivateDataAccessRequest::query()->where('resource_type', 'vault_file')
+                ->where('resource_id', $file->id)->where('owner_id', $file->user_id)
+                ->whereIn('status', ['pending', 'approved'])
+                ->update(['status' => 'revoked', 'encrypted_symmetric_key' => null, 'responded_at' => now()]);
+        });
+    }
+
     protected $fillable = [
         'original_name',
         'stored_name',
