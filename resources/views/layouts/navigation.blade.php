@@ -57,6 +57,7 @@
         <div class="space-y-1">
             <p class="px-4 pb-2 text-xs font-bold uppercase tracking-widest text-slate-400">Personal</p>
             <a href="{{ route('personal-vault.index') }}" @class(['flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition', 'bg-primary-50 text-primary-700' => request()->routeIs('personal-vault.*'), 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' => ! request()->routeIs('personal-vault.*')]) @if(request()->routeIs('personal-vault.*')) aria-current="page" @endif><i class="fa-solid fa-lock w-5 text-center" aria-hidden="true"></i> Personal Vault</a>
+            <a href="{{ route('private-access.index') }}" @class(['flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition', 'bg-primary-50 text-primary-700' => request()->routeIs('private-access.*'), 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' => ! request()->routeIs('private-access.*')]) @if(request()->routeIs('private-access.*')) aria-current="page" @endif><i class="fa-solid fa-key w-5 text-center" aria-hidden="true"></i> Access requests</a>
             <a href="{{ route('trash.index') }}" @class(['flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition', 'bg-primary-50 text-primary-700' => request()->routeIs('trash.*'), 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' => ! request()->routeIs('trash.*')]) @if(request()->routeIs('trash.*')) aria-current="page" @endif><i class="fa-solid fa-trash-can w-5 text-center" aria-hidden="true"></i> Trash</a>
         </div>
 

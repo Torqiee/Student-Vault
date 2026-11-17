@@ -4,6 +4,7 @@ use App\Http\Controllers\CourseController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\PersonalVaultController;
+use App\Http\Controllers\PrivateDataAccessRequestController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SharedFolderController;
@@ -53,6 +54,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/personal-vault/{personalData}/edit', [PersonalVaultController::class, 'edit'])->whereNumber('personalData')->name('personal-vault.edit');
     Route::put('/personal-vault/{personalData}', [PersonalVaultController::class, 'update'])->whereNumber('personalData')->name('personal-vault.update');
     Route::delete('/personal-vault/{personalData}', [PersonalVaultController::class, 'destroy'])->whereNumber('personalData')->name('personal-vault.destroy');
+    Route::get('/private-access', [PrivateDataAccessRequestController::class, 'index'])->name('private-access.index');
+    Route::post('/private-access', [PrivateDataAccessRequestController::class, 'store'])->middleware('throttle:10,1')->name('private-access.store');
+    Route::post('/private-access/{accessRequest}/approve', [PrivateDataAccessRequestController::class, 'approve'])->name('private-access.approve');
+    Route::post('/private-access/{accessRequest}/decline', [PrivateDataAccessRequestController::class, 'decline'])->name('private-access.decline');
+    Route::post('/private-access/{accessRequest}/revoke', [PrivateDataAccessRequestController::class, 'revoke'])->name('private-access.revoke');
 
     Route::get('/shared-folders/invitations', [SharedFolderInvitationController::class, 'index'])->name('shared-folders.invitations.index');
     Route::post('/shared-folder-invitations/{invitation}/accept', [SharedFolderInvitationController::class, 'accept'])->name('shared-folders.invitations.accept');

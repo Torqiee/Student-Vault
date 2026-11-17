@@ -1481,12 +1481,12 @@ Status: **Completed**
 
 ## Phase 10A — Private Data Access and Key Management
 
-Status: **Planned — Assignment 2**
+Status: **In Progress — Assignment 2 (1.1 completed)**
 
 <!-- 1.1 -->
-- [ ] Permintaan akses ke data privat pengguna lain, termasuk gambar dan dokumen
-- [ ] Persetujuan, penolakan, dan pencabutan akses oleh pemilik data
-- [ ] Pembuatan kunci simetris untuk data yang disetujui
+- [x] Permintaan akses ke data privat pengguna lain, termasuk gambar dan dokumen
+- [x] Persetujuan, penolakan, dan pencabutan akses oleh pemilik data
+- [x] Pembuatan kunci simetris untuk data yang disetujui
 
 <!-- 1.2 -->
 - [ ] Distribusi kunci melalui saluran lain dengan perlindungan enkripsi asimetris
