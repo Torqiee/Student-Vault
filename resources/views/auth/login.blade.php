@@ -18,27 +18,9 @@
             <span class="hidden items-center gap-2 text-sm font-medium text-slate-500 sm:inline-flex"><i class="fa-solid fa-lock text-primary-700" aria-hidden="true"></i> Your private academic workspace</span>
         </header>
 
-        <main class="flex flex-1 items-center py-10 sm:py-16">
-            <div class="grid w-full overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-200/60 lg:grid-cols-2">
-                <section class="relative hidden min-h-[620px] flex-col justify-between overflow-hidden bg-slate-100 p-12 text-slate-900 lg:flex" aria-labelledby="welcome-heading">
-                    <div class="absolute -right-28 -top-28 h-96 w-96 rounded-full border border-slate-200" aria-hidden="true"></div>
-                    <div class="absolute -right-12 -top-12 h-64 w-64 rounded-full border border-slate-200" aria-hidden="true"></div>
-                    <div class="absolute -bottom-36 -left-20 h-96 w-96 rounded-full bg-slate-200/70 blur-3xl" aria-hidden="true"></div>
-                    <div class="relative z-10 inline-flex w-fit items-center gap-2 rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-slate-600">
-                        <i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Built for privacy
-                    </div>
-                    <div class="relative z-10 max-w-md">
-                        <h2 id="welcome-heading" class="text-4xl font-extrabold leading-tight tracking-tight xl:text-5xl">Your work deserves a safer space.</h2>
-                        <p class="mt-6 text-base leading-7 text-slate-600">Keep your notes, documents, and courses together in one private place built for student life.</p>
-                        <div class="mt-10 flex flex-wrap gap-3 text-sm text-slate-600">
-                            <span class="rounded-full border border-slate-300 bg-white/50 px-3 py-1.5"><i class="fa-solid fa-lock mr-2" aria-hidden="true"></i>Encrypted storage</span>
-                            <span class="rounded-full border border-slate-300 bg-white/50 px-3 py-1.5"><i class="fa-solid fa-user-shield mr-2" aria-hidden="true"></i>Only yours</span>
-                        </div>
-                    </div>
-                    <p class="relative z-10 text-xs text-slate-500">StudentVault · Private by default</p>
-                </section>
-
-                <section class="flex items-center px-6 py-10 sm:px-10 sm:py-14 lg:px-14" aria-labelledby="login-heading">
+        <main class="flex flex-1 items-center justify-center py-10 sm:py-16">
+            <div class="w-full max-w-xl overflow-hidden rounded-3xl border border-slate-200 bg-white">
+                <section class="px-6 py-10 sm:px-10 sm:py-14 lg:px-14" aria-labelledby="login-heading">
                     <div class="mx-auto w-full max-w-md">
                         <div class="mb-8">
                             <h1 id="login-heading" class="text-3xl font-extrabold tracking-tight text-slate-900">Log in to your vault</h1>
