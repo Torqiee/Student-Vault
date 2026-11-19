@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\VaultFile;
 use App\Services\Encryption\EncryptionManager;
 use App\Services\Encryption\EncryptionPolicy;
+use App\Services\Encryption\PrivateDataKeyService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -14,9 +15,16 @@ use RuntimeException;
 
 class FileVaultService
 {
+    public const RESOURCE_TYPE = 'vault_file';
+
     private const CHUNK_SIZE = 1048576;
 
-    public function __construct(private EncryptionManager $encryptionManager) {}
+    private const RECIPIENT_COPY_HEADER = "SVR1\n";
+
+    public function __construct(
+        private EncryptionManager $encryptionManager,
+        private PrivateDataKeyService $privateDataKeyService
+    ) {}
 
     public function store(User $user, UploadedFile $file, string $category, ?int $courseId = null): VaultFile
     {
@@ -146,6 +154,7 @@ class FileVaultService
         DB::transaction(function () use ($vaultFile): void {
             $vaultFile->sharedFolders()->detach();
             $vaultFile->delete();
+            $this->privateDataKeyService->forgetResourceKey($vaultFile->user_id, self::RESOURCE_TYPE, $vaultFile->id);
         });
     }
 
@@ -167,6 +176,132 @@ class FileVaultService
             throw new RuntimeException('Unable to delete encrypted file.');
         }
 
+        $this->privateDataKeyService->forgetResourceKey($vaultFile->user_id, self::RESOURCE_TYPE, $vaultFile->id);
         $vaultFile->forceDelete();
+    }
+
+    /**
+     * Make sure an approved file has a ciphertext copy encrypted with its own resource key.
+     *
+     * The original file stays encrypted under the category policy; the copy lets the shared
+     * resource key open the approved file without exposing the environment keys.
+     *
+     * @return string The file's raw resource key.
+     */
+    public function ensureRecipientCopy(VaultFile $vaultFile): string
+    {
+        $key = $this->privateDataKeyService->getOrCreateResourceKey($vaultFile->user_id, self::RESOURCE_TYPE, $vaultFile->id);
+        $resourceKey = $this->privateDataKeyService->resourceKeyRecord($vaultFile->user_id, self::RESOURCE_TYPE, $vaultFile->id);
+        $disk = Storage::disk('local');
+
+        if (
+            $resourceKey?->shared_stored_name
+            && $disk->exists(PrivateDataKeyService::SHARED_COPY_DIRECTORY.$resourceKey->shared_stored_name)
+        ) {
+            return $key;
+        }
+
+        $storedName = Str::uuid()->toString().'.vault';
+        $path = PrivateDataKeyService::SHARED_COPY_DIRECTORY.$storedName;
+        $plaintextStream = $this->decryptToStream($vaultFile);
+        $encryptedStream = fopen('php://temp/maxmemory:1048576', 'w+b');
+
+        if ($encryptedStream === false) {
+            fclose($plaintextStream);
+
+            throw new RuntimeException('Unable to prepare encrypted copy.');
+        }
+
+        try {
+            fwrite($encryptedStream, self::RECIPIENT_COPY_HEADER);
+
+            while (! feof($plaintextStream)) {
+                $chunk = fread($plaintextStream, self::CHUNK_SIZE);
+
+                if ($chunk === false) {
+                    throw new RuntimeException('Unable to read decrypted file.');
+                }
+
+                if ($chunk !== '') {
+                    fwrite($encryptedStream, $this->encryptionManager->encryptWithKey($chunk, $key)."\n");
+                }
+            }
+
+            rewind($encryptedStream);
+
+            if (! $disk->put($path, $encryptedStream)) {
+                throw new RuntimeException('Unable to store encrypted copy.');
+            }
+
+            $this->privateDataKeyService->recordSharedCopy($vaultFile->user_id, self::RESOURCE_TYPE, $vaultFile->id, $storedName);
+
+            if ($resourceKey?->shared_stored_name) {
+                $disk->delete(PrivateDataKeyService::SHARED_COPY_DIRECTORY.$resourceKey->shared_stored_name);
+            }
+
+            return $key;
+        } catch (\Throwable $exception) {
+            $disk->delete($path);
+
+            throw $exception;
+        } finally {
+            fclose($plaintextStream);
+            fclose($encryptedStream);
+        }
+    }
+
+    /**
+     * Decrypt an approved file's copy with its resource key and verify integrity.
+     *
+     * @return resource
+     */
+    public function decryptRecipientCopyToStream(VaultFile $vaultFile, string $key)
+    {
+        $resourceKey = $this->privateDataKeyService->resourceKeyRecord($vaultFile->user_id, self::RESOURCE_TYPE, $vaultFile->id);
+
+        if (! $resourceKey?->shared_stored_name) {
+            throw new RuntimeException('Encrypted copy does not exist.');
+        }
+
+        $encryptedStream = Storage::disk('local')->readStream(PrivateDataKeyService::SHARED_COPY_DIRECTORY.$resourceKey->shared_stored_name);
+
+        if ($encryptedStream === false) {
+            throw new RuntimeException('Encrypted copy does not exist.');
+        }
+
+        $plaintextStream = fopen('php://temp/maxmemory:1048576', 'w+b');
+        $hash = hash_init('sha256');
+        $size = 0;
+
+        try {
+            if (fgets($encryptedStream, 6) !== self::RECIPIENT_COPY_HEADER) {
+                throw new RuntimeException('Invalid encrypted copy format.');
+            }
+
+            while (($line = fgets($encryptedStream, 5000000)) !== false) {
+                if (! str_ends_with($line, "\n")) {
+                    throw new RuntimeException('Invalid encrypted copy format.');
+                }
+
+                $chunk = $this->encryptionManager->decryptWithKey(rtrim($line, "\r\n"), $key);
+                hash_update($hash, $chunk);
+                $size += strlen($chunk);
+                fwrite($plaintextStream, $chunk);
+            }
+
+            if ($size !== $vaultFile->original_size || ! hash_equals($vaultFile->original_hash, hash_final($hash))) {
+                throw new RuntimeException('File integrity verification failed.');
+            }
+
+            rewind($plaintextStream);
+
+            return $plaintextStream;
+        } catch (\Throwable $exception) {
+            fclose($plaintextStream);
+
+            throw $exception;
+        } finally {
+            fclose($encryptedStream);
+        }
     }
 }

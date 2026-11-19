@@ -44,6 +44,20 @@ class AesCipher implements CipherInterface
 
     public function encrypt(string $plaintext): array
     {
+        return $this->encryptWithKey($plaintext, $this->key);
+    }
+
+    public function decrypt(array $payload): string
+    {
+        return $this->decryptWithKey($payload, $this->key);
+    }
+
+    public function encryptWithKey(
+        string $plaintext,
+        string $key
+    ): array {
+        $this->validateKey($key);
+
         $ivLength = openssl_cipher_iv_length($this->cipher);
 
         $iv = random_bytes($ivLength);
@@ -53,7 +67,7 @@ class AesCipher implements CipherInterface
         $ciphertext = openssl_encrypt(
             $plaintext,
             $this->cipher,
-            $this->key,
+            $key,
             OPENSSL_RAW_DATA,
             $iv,
             $tag
@@ -70,8 +84,12 @@ class AesCipher implements CipherInterface
         ];
     }
 
-    public function decrypt(array $payload): string
-    {
+    public function decryptWithKey(
+        array $payload,
+        string $key
+    ): string {
+        $this->validateKey($key);
+
         if (
             ! isset(
                 $payload['iv'],
@@ -101,10 +119,21 @@ class AesCipher implements CipherInterface
             );
         }
 
+        $ivLength = openssl_cipher_iv_length($this->cipher);
+
+        if (
+            strlen($iv) !== $ivLength ||
+            strlen($tag) !== 16
+        ) {
+            throw new RuntimeException(
+                'Invalid AES IV or authentication tag length.'
+            );
+        }
+
         $plaintext = openssl_decrypt(
             $ciphertext,
             $this->cipher,
-            $this->key,
+            $key,
             OPENSSL_RAW_DATA,
             $iv,
             $tag
@@ -117,5 +146,14 @@ class AesCipher implements CipherInterface
         }
 
         return $plaintext;
+    }
+
+    private function validateKey(string $key): void
+    {
+        if (strlen($key) !== 32) {
+            throw new RuntimeException(
+                'AES-256 key must contain exactly 32 bytes.'
+            );
+        }
     }
 }

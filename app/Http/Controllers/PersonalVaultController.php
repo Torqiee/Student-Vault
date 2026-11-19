@@ -91,11 +91,11 @@ class PersonalVaultController extends Controller
         return redirect()->route('personal-vault.index')->with('success', 'Personal information updated securely.');
     }
 
-    public function destroy(Request $request, int $personalData): RedirectResponse
+    public function destroy(Request $request, int $personalData, PersonalVaultService $vault): RedirectResponse
     {
         // Scope the lookup to the authenticated owner; never trust a URL ID by itself.
         $record = $request->user()->personalVaultEntries()->findOrFail($personalData);
-        $record->delete();
+        $vault->delete($record);
 
         return redirect()->route('personal-vault.index')->with('success', 'Personal information deleted. Linked identity files remain in Files.');
     }

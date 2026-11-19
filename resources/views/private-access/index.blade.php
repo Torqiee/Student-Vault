@@ -5,7 +5,7 @@
         @if ($errors->any())<p class="rounded-lg bg-red-50 p-4 text-sm text-red-700" role="alert">{{ $errors->first() }}</p>@endif
         <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <h3 class="text-lg font-semibold text-slate-900">Request access to one item</h3>
-            <p class="mt-1 text-sm text-slate-500">Ask the owner for their email and item ID. An approval does not open the item yet; secure key exchange is a later phase.</p>
+            <p class="mt-1 text-sm text-slate-500">Ask the owner for their email and item ID. When the owner approves, StudentVault encrypts the item's access key with your public key and emails it to you. The owner can also send that encrypted key through another channel such as WhatsApp.</p>
             <form method="POST" action="{{ route('private-access.store') }}" class="mt-5 grid gap-4 sm:grid-cols-3">
                 @csrf
                 <label class="block text-sm font-medium text-slate-700">Owner email<input type="email" name="owner_email" required class="mt-1 block w-full rounded-lg border-slate-300" autocomplete="email"></label>
@@ -28,6 +28,13 @@
                                 <form method="POST" action="{{ route('private-access.revoke', $item) }}">@csrf<button class="rounded-lg border border-red-200 px-3 py-2 text-sm text-red-700">Revoke</button></form>
                             @endif
                         </div>
+                        @if ($item->status === 'approved' && $item->encrypted_symmetric_key)
+                            <div class="w-full" x-data="{ copied: false }">
+                                <label for="encrypted-key-{{ $item->id }}" class="block text-xs font-medium text-slate-600">Encrypted access key for {{ $item->requester->name }} (RSA-OAEP, safe to send by email or WhatsApp)</label>
+                                <textarea id="encrypted-key-{{ $item->id }}" x-ref="key" readonly rows="3" class="mt-1 block w-full rounded-lg border-slate-300 font-mono text-xs text-slate-600">{{ $item->encrypted_symmetric_key }}</textarea>
+                                <button type="button" class="mt-2 rounded-lg border border-slate-300 px-3 py-1.5 text-xs text-slate-700" x-on:click="navigator.clipboard.writeText($refs.key.value); copied = true" x-text="copied ? 'Copied' : 'Copy encrypted key'"></button>
+                            </div>
+                        @endif
                     </div>
                 @empty <p class="text-sm text-slate-500">No incoming requests.</p> @endforelse
             </div>
@@ -36,7 +43,7 @@
             <h3 class="text-lg font-semibold text-slate-900">Your requests</h3>
             <div class="mt-4 space-y-3">
                 @forelse ($outgoing as $item)
-                    <p class="rounded-xl border border-slate-200 p-4 text-sm text-slate-700">{{ $item->resource_type === 'personal_data' ? 'Personal Vault entry' : 'File' }} #{{ $item->resource_id }} · {{ $item->owner->email }} · <strong>{{ ucfirst($item->status) }}</strong></p>
+                    <p class="rounded-xl border border-slate-200 p-4 text-sm text-slate-700">{{ $item->resource_type === 'personal_data' ? 'Personal Vault entry' : 'File' }} #{{ $item->resource_id }} · {{ $item->owner->email }} · <strong>{{ ucfirst($item->status) }}</strong>@if ($item->status === 'approved') · <span class="text-slate-500">The encrypted access key was sent to your email.</span>@endif</p>
                 @empty <p class="text-sm text-slate-500">No outgoing requests.</p> @endforelse
             </div>
         </section>

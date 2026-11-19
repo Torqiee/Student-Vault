@@ -5,13 +5,16 @@ namespace App\Services\Vault;
 use App\Models\PersonalVaultEntry;
 use App\Models\User;
 use App\Services\Encryption\EncryptionManager;
-use App\Services\Encryption\EncryptionPolicy;
+use App\Services\Encryption\PrivateDataKeyService;
+use Illuminate\Support\Facades\DB;
 use JsonException;
 use RuntimeException;
 use Throwable;
 
 class PersonalVaultService
 {
+    public const RESOURCE_TYPE = 'personal_data';
+
     private const CATEGORIES = [
         'student_profile' => 'Student Profile',
         'contact' => 'Contact Details',
@@ -56,9 +59,10 @@ class PersonalVaultService
         ],
     ];
 
-    public function __construct(private EncryptionManager $encryptionManager)
-    {
-    }
+    public function __construct(
+        private EncryptionManager $encryptionManager,
+        private PrivateDataKeyService $privateDataKeyService
+    ) {}
 
     public static function categories(): array
     {
@@ -73,17 +77,6 @@ class PersonalVaultService
     public static function fieldGroups(): array
     {
         return self::FIELD_GROUPS;
-    }
-
-    /** Encrypt one value using the project's AES-256-GCM cipher. */
-    public function encryptText(string $value): string
-    {
-        return $this->encryptionManager->encrypt($value, EncryptionPolicy::IDENTITY);
-    }
-
-    public function decryptText(string $ciphertext): string
-    {
-        return $this->encryptionManager->decrypt($ciphertext);
     }
 
     public function hasContent(string $category, array $fields, ?int $identityFileId): bool
@@ -102,15 +95,72 @@ class PersonalVaultService
         return false;
     }
 
+    /**
+     * Store a new entry encrypted with its own AES-256 resource key.
+     */
     public function create(User $user, array $validated): PersonalVaultEntry
     {
-        return $user->personalVaultEntries()->create($this->encryptedAttributes($validated));
+        return DB::transaction(function () use ($user, $validated): PersonalVaultEntry {
+            $entry = $user->personalVaultEntries()->create([
+                'encrypted_label' => '',
+                'category' => $validated['category'],
+                'encrypted_fields' => '{}',
+            ]);
+
+            $key = $this->privateDataKeyService->getOrCreateResourceKey($user->id, self::RESOURCE_TYPE, $entry->id);
+
+            $entry->fill($this->encryptedAttributes($validated, $key));
+            $entry->save();
+
+            return $entry;
+        });
     }
 
     public function update(PersonalVaultEntry $entry, array $validated): void
     {
-        $entry->fill($this->encryptedAttributes($validated));
+        $key = $this->privateDataKeyService->getOrCreateResourceKey($entry->user_id, self::RESOURCE_TYPE, $entry->id);
+
+        $entry->fill($this->encryptedAttributes($validated, $key));
         $entry->save();
+    }
+
+    /**
+     * Delete an entry together with its resource key.
+     */
+    public function delete(PersonalVaultEntry $entry): void
+    {
+        DB::transaction(function () use ($entry): void {
+            $entry->delete();
+            $this->privateDataKeyService->forgetResourceKey($entry->user_id, self::RESOURCE_TYPE, $entry->id);
+        });
+    }
+
+    /**
+     * Re-encrypt an entry created before resource keys existed so its key can be shared.
+     *
+     * @return string The entry's raw resource key.
+     */
+    public function ensureResourceKeyEncryption(PersonalVaultEntry $entry): string
+    {
+        $existingKey = $this->privateDataKeyService->findResourceKey($entry->user_id, self::RESOURCE_TYPE, $entry->id);
+
+        if ($existingKey !== null && $this->encryptionManager->usesResourceKey($entry->encrypted_label)) {
+            return $existingKey;
+        }
+
+        $plaintext = [
+            'label' => $this->decryptValue($entry->encrypted_label, $existingKey),
+            'category' => $entry->category,
+            'fields' => $this->decryptFields($entry, $existingKey),
+            'identity_file_id' => $entry->identity_file_id,
+        ];
+
+        $key = $this->privateDataKeyService->getOrCreateResourceKey($entry->user_id, self::RESOURCE_TYPE, $entry->id);
+
+        $entry->fill($this->encryptedAttributes($plaintext, $key));
+        $entry->save();
+
+        return $key;
     }
 
     /** Convert a stored record to view data; plaintext is never written back to the model. */
@@ -126,11 +176,13 @@ class PersonalVaultService
         }
 
         try {
+            $key = $this->privateDataKeyService->findResourceKey($entry->user_id, self::RESOURCE_TYPE, $entry->id);
+
             return [
                 'id' => $entry->id,
-                'label' => $this->decryptText($entry->encrypted_label),
+                'label' => $this->decryptValue($entry->encrypted_label, $key),
                 'category' => $entry->category,
-                'fields' => $this->decryptFields($entry),
+                'fields' => $this->decryptFields($entry, $key),
                 'identity_file_id' => $entry->identity_file_id,
                 'identity_file' => $identityFile,
                 'updated_at' => $entry->updated_at,
@@ -153,19 +205,22 @@ class PersonalVaultService
         }
     }
 
-    private function encryptedAttributes(array $validated): array
+    /**
+     * @param  array{label: string, category: string, fields?: array<string, mixed>, identity_file_id?: int|string|null}  $validated
+     * @return array{encrypted_label: string, category: string, encrypted_fields: string, identity_file_id: int|string|null}
+     */
+    private function encryptedAttributes(array $validated, string $key): array
     {
         $category = $validated['category'];
-        $label = trim($validated['label']);
         $fields = $this->fieldsForCategory($category, $validated['fields'] ?? []);
         $encryptedFields = [];
 
-        foreach ($fields as $key => $value) {
-            $encryptedFields[$key] = $this->encryptText($value);
+        foreach ($fields as $field => $value) {
+            $encryptedFields[$field] = $this->encryptionManager->encryptWithKey($value, $key);
         }
 
         return [
-            'encrypted_label' => $this->encryptText($label),
+            'encrypted_label' => $this->encryptionManager->encryptWithKey(trim($validated['label']), $key),
             'category' => $category,
             'encrypted_fields' => json_encode($encryptedFields, JSON_THROW_ON_ERROR),
             'identity_file_id' => $category === 'identity'
@@ -194,8 +249,12 @@ class PersonalVaultService
         return $clean;
     }
 
-    /** @throws JsonException|RuntimeException */
-    private function decryptFields(PersonalVaultEntry $entry): array
+    /**
+     * @return array<string, string>
+     *
+     * @throws JsonException|RuntimeException
+     */
+    private function decryptFields(PersonalVaultEntry $entry, ?string $resourceKey): array
     {
         $encryptedFields = json_decode($entry->encrypted_fields, true, 512, JSON_THROW_ON_ERROR);
         if (! is_array($encryptedFields)) {
@@ -203,14 +262,30 @@ class PersonalVaultService
         }
 
         $fields = [];
-        foreach ($encryptedFields as $key => $ciphertext) {
-            if (! isset(self::FIELD_LABELS[$key]) || ! is_string($ciphertext)) {
+        foreach ($encryptedFields as $field => $ciphertext) {
+            if (! isset(self::FIELD_LABELS[$field]) || ! is_string($ciphertext)) {
                 continue;
             }
 
-            $fields[$key] = $this->decryptText($ciphertext);
+            $fields[$field] = $this->decryptValue($ciphertext, $resourceKey);
         }
 
         return $fields;
+    }
+
+    /**
+     * Decrypt a resource-key payload, or a legacy payload encrypted with the environment AES key.
+     */
+    private function decryptValue(string $ciphertext, ?string $resourceKey): string
+    {
+        if ($this->encryptionManager->usesResourceKey($ciphertext)) {
+            if ($resourceKey === null) {
+                throw new RuntimeException('Resource encryption key not found.');
+            }
+
+            return $this->encryptionManager->decryptWithKey($ciphertext, $resourceKey);
+        }
+
+        return $this->encryptionManager->decrypt($ciphertext);
     }
 }

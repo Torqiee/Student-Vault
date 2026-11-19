@@ -7,10 +7,13 @@ use App\Services\Encryption\Ciphers\DesCipher;
 use App\Services\Encryption\Ciphers\Rc4Cipher;
 use App\Services\Encryption\Contracts\CipherInterface;
 use InvalidArgumentException;
+use JsonException;
 use RuntimeException;
 
 class EncryptionManager
 {
+    private const RESOURCE_KEY_VERSION = 2;
+
     /**
      * @var array<string, CipherInterface>
      */
@@ -35,33 +38,120 @@ class EncryptionManager
     ): string {
         $cipherService = $this->cipher($cipher);
 
-        $encryptedData = $cipherService->encrypt($plaintext);
-
         $envelope = [
             'version' => 1,
             'cipher' => $cipherService->identifier(),
-            'data' => $encryptedData,
+            'data' => $cipherService->encrypt($plaintext),
         ];
 
-        return base64_encode(
-            json_encode(
-                $envelope,
-                JSON_THROW_ON_ERROR
-            )
-        );
+        return $this->encodeEnvelope($envelope);
     }
 
     public function decrypt(string $encryptedPayload): string
     {
-        $decoded = base64_decode(
-            $encryptedPayload,
-            true
+        $envelope = $this->decodeEnvelope($encryptedPayload);
+
+        if ($envelope['version'] !== 1) {
+            throw new RuntimeException(
+                'Unsupported encryption payload version.'
+            );
+        }
+
+        return $this->cipher($envelope['cipher'])->decrypt($envelope['data']);
+    }
+
+    /**
+     * Encrypt with a per-resource AES-256 key instead of the environment key.
+     */
+    public function encryptWithKey(
+        string $plaintext,
+        string $key
+    ): string {
+        $envelope = [
+            'version' => self::RESOURCE_KEY_VERSION,
+            'cipher' => 'aes',
+            'key_type' => 'resource',
+            'data' => $this->aes()->encryptWithKey($plaintext, $key),
+        ];
+
+        return $this->encodeEnvelope($envelope);
+    }
+
+    public function decryptWithKey(
+        string $encryptedPayload,
+        string $key
+    ): string {
+        $envelope = $this->decodeEnvelope($encryptedPayload);
+
+        if (
+            $envelope['version'] !== self::RESOURCE_KEY_VERSION ||
+            $envelope['cipher'] !== 'aes' ||
+            ($envelope['key_type'] ?? null) !== 'resource'
+        ) {
+            throw new RuntimeException(
+                'Unsupported resource encryption payload.'
+            );
+        }
+
+        return $this->aes()->decryptWithKey($envelope['data'], $key);
+    }
+
+    /**
+     * Determine whether a payload was encrypted with a per-resource key.
+     */
+    public function usesResourceKey(string $encryptedPayload): bool
+    {
+        try {
+            $envelope = $this->decodeEnvelope($encryptedPayload);
+        } catch (RuntimeException) {
+            return false;
+        }
+
+        return $envelope['version'] === self::RESOURCE_KEY_VERSION
+            && ($envelope['key_type'] ?? null) === 'resource';
+    }
+
+    public function cipher(string $identifier): CipherInterface
+    {
+        if (! isset($this->ciphers[$identifier])) {
+            throw new InvalidArgumentException(
+                "Unsupported cipher: {$identifier}"
+            );
+        }
+
+        return $this->ciphers[$identifier];
+    }
+
+    private function aes(): AesCipher
+    {
+        $aes = $this->cipher('aes');
+
+        if (! $aes instanceof AesCipher) {
+            throw new RuntimeException('AES cipher is unavailable.');
+        }
+
+        return $aes;
+    }
+
+    /**
+     * @param  array<string, mixed>  $envelope
+     */
+    private function encodeEnvelope(array $envelope): string
+    {
+        return base64_encode(
+            json_encode($envelope, JSON_THROW_ON_ERROR)
         );
+    }
+
+    /**
+     * @return array{version: int, cipher: string, data: array<string, string>, key_type?: string}
+     */
+    private function decodeEnvelope(string $encryptedPayload): array
+    {
+        $decoded = base64_decode($encryptedPayload, true);
 
         if ($decoded === false) {
-            throw new RuntimeException(
-                'Invalid encrypted payload.'
-            );
+            throw new RuntimeException('Invalid encrypted payload.');
         }
 
         try {
@@ -71,7 +161,7 @@ class EncryptionManager
                 512,
                 JSON_THROW_ON_ERROR
             );
-        } catch (\JsonException $exception) {
+        } catch (JsonException $exception) {
             throw new RuntimeException(
                 'Invalid encrypted payload format.',
                 previous: $exception
@@ -79,6 +169,7 @@ class EncryptionManager
         }
 
         if (
+            ! is_array($envelope) ||
             ! isset(
                 $envelope['version'],
                 $envelope['cipher'],
@@ -90,35 +181,6 @@ class EncryptionManager
             );
         }
 
-        if ($envelope['version'] !== 1) {
-            throw new RuntimeException(
-                'Unsupported encryption payload version.'
-            );
-        }
-
-        $cipher = $this->cipher(
-            $envelope['cipher']
-        );
-
-        return $cipher->decrypt(
-            $envelope['data']
-        );
-    }
-
-    public function cipher(
-        string $identifier
-    ): CipherInterface {
-        if (! isset($this->ciphers[$identifier])) {
-            throw new InvalidArgumentException(
-                "Unsupported cipher: {$identifier}"
-            );
-        }
-
-        return $this->ciphers[$identifier];
-    }
-
-    public function availableCiphers(): array
-    {
-        return array_keys($this->ciphers);
+        return $envelope;
     }
 }
