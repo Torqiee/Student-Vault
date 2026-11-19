@@ -39,13 +39,71 @@
                 @empty <p class="text-sm text-slate-500">No incoming requests.</p> @endforelse
             </div>
         </section>
-        <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h3 class="text-lg font-semibold text-slate-900">Your requests</h3>
-            <div class="mt-4 space-y-3">
-                @forelse ($outgoing as $item)
-                    <p class="rounded-xl border border-slate-200 p-4 text-sm text-slate-700">{{ $item->resource_type === 'personal_data' ? 'Personal Vault entry' : 'File' }} #{{ $item->resource_id }} · {{ $item->owner->email }} · <strong>{{ ucfirst($item->status) }}</strong>@if ($item->status === 'approved') · <span class="text-slate-500">The encrypted access key was sent to your email.</span>@endif</p>
-                @empty <p class="text-sm text-slate-500">No outgoing requests.</p> @endforelse
-            </div>
-        </section>
+    <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h3 class="text-lg font-semibold text-slate-900">
+            Your requests
+        </h3>
+
+        <div class="mt-4 space-y-3">
+            @forelse ($outgoing as $item)
+                <div class="rounded-xl border border-slate-200 p-4">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <p class="text-sm font-medium text-slate-800">
+                                {{ $item->resource_type === 'personal_data' ? 'Personal Vault entry' : 'File' }}
+                                #{{ $item->resource_id }}
+                            </p>
+
+                            <p class="mt-1 text-sm text-slate-500">
+                                Owner: {{ $item->owner->email }}
+                            </p>
+
+                            <p class="mt-1 text-sm font-semibold
+                                @if ($item->status === 'approved') text-emerald-700
+                                @elseif ($item->status === 'declined') text-red-700
+                                @elseif ($item->status === 'revoked') text-red-700
+                                @else text-amber-700
+                                @endif">
+                                Status: {{ ucfirst($item->status) }}
+                            </p>
+                        </div>
+
+                        @if ($item->status === 'approved')
+                            @if ($item->resource_type === 'personal_data')
+                                <a
+                                    href="{{ route('private-access.resources.personal-data', $item->id) }}"
+                                    class="rounded-lg bg-primary-700 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-800">
+                                    Open shared data
+                                </a>
+                            @elseif ($item->resource_type === 'vault_file')
+                                <a
+                                    href="{{ route('private-access.resources.file', $item->id) }}"
+                                    class="rounded-lg bg-primary-700 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-800">
+                                    Download shared file
+                                </a>
+                            @endif
+                        @elseif ($item->status === 'pending')
+                            <span class="text-xs text-slate-500">
+                                Waiting for owner approval.
+                            </span>
+                        @elseif ($item->status === 'declined')
+                            <span class="text-xs text-red-600">
+                                Access was declined.
+                            </span>
+                        @elseif ($item->status === 'revoked')
+                            <span class="text-xs text-red-600">
+                                Access has been revoked.
+                            </span>
+                        @endif
+                    </div>
+                </div>
+            @empty
+                <p class="text-sm text-slate-500">
+                    No outgoing requests.
+                </p>
+            @endforelse
+        </div>
+    </section>
+
     </div>
 </x-app-layout>

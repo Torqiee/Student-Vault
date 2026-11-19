@@ -205,6 +205,52 @@ class PersonalVaultService
         }
     }
 
+
+/**
+ * Present a personal vault entry using a resource key
+ * decrypted by an authorized requester.
+ *
+ * Linked identity files are intentionally excluded because
+ * they require their own separate access approval.
+ */
+    public function presentForRequester(
+        PersonalVaultEntry $entry,
+        string $resourceKey
+    ): array {
+        try {
+            return [
+                'id' => $entry->id,
+                'label' => $this->decryptValue(
+                    $entry->encrypted_label,
+                    $resourceKey
+                ),
+                'category' => $entry->category,
+                'fields' => $this->decryptFields(
+                    $entry,
+                    $resourceKey
+                ),
+                'identity_file_id' => null,
+                'identity_file' => null,
+                'updated_at' => $entry->updated_at,
+                'error' => false,
+            ];
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return [
+                'id' => $entry->id,
+                'label' => 'Unable to open this entry securely',
+                'category' => $entry->category,
+                'fields' => [],
+                'identity_file_id' => null,
+                'identity_file' => null,
+                'updated_at' => $entry->updated_at,
+                'error' => true,
+            ];
+        }
+    }
+
+
     /**
      * @param  array{label: string, category: string, fields?: array<string, mixed>, identity_file_id?: int|string|null}  $validated
      * @return array{encrypted_label: string, category: string, encrypted_fields: string, identity_file_id: int|string|null}

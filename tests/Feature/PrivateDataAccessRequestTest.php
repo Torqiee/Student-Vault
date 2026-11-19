@@ -18,21 +18,37 @@ use Illuminate\Support\Facades\Storage;
 uses(RefreshDatabase::class);
 
 beforeEach(function (): void {
-    config()->set('studentvault.encryption.aes.key', base64_encode(str_repeat('a', 32)));
-    config()->set('studentvault.encryption.des.key', base64_encode(str_repeat('b', 8)));
-    config()->set('studentvault.encryption.rc4.key', base64_encode(str_repeat('c', 16)));
+    config()->set(
+        'studentvault.encryption.aes.key',
+        base64_encode(str_repeat('a', 32))
+    );
+
+    config()->set(
+        'studentvault.encryption.des.key',
+        base64_encode(str_repeat('b', 8))
+    );
+
+    config()->set(
+        'studentvault.encryption.rc4.key',
+        base64_encode(str_repeat('c', 32))
+    );
+
     Storage::fake('local');
     Mail::fake();
 });
 
-function privateEntry(User $owner, string $label = 'Owner profile', string $studentId = 'STUDENT-123'): int
-{
+function privateEntry(
+    User $owner,
+    string $label = 'Owner profile',
+    string $studentId = 'STUDENT-123'
+): int {
     return app(PersonalVaultService::class)->create($owner, [
         'label' => $label,
         'category' => 'student_profile',
         'fields' => ['student_id' => $studentId],
     ])->id;
 }
+
 
 function requestAccess(User $requester, User $owner, string $type, int $id): PrivateDataAccessRequest
 {
@@ -95,23 +111,55 @@ it('does not let another user unwrap an approved key', function (): void {
     app(PrivateDataKeyService::class)->decryptForRequester($accessRequest->fresh(), $intruder);
 })->throws(RuntimeException::class, 'Access to this key is not authorized.');
 
+
 it('stores resource keys and private keys encrypted at rest', function (): void {
     $owner = User::factory()->create();
     $requester = User::factory()->create();
     $entryId = privateEntry($owner);
-    $this->actingAs($owner)->post(route('private-access.approve', requestAccess($requester, $owner, 'personal_data', $entryId)));
+
+    // Requester mengajukan permintaan akses terlebih dahulu.
+    $accessRequest = requestAccess(
+        $requester,
+        $owner,
+        'personal_data',
+        $entryId
+    );
+
+    // Setelah request dibuat, owner melakukan approval.
+    $this->actingAs($owner)
+        ->post(route('private-access.approve', $accessRequest))
+        ->assertRedirect();
+
+    $accessRequest->refresh();
+
+    expect($accessRequest->status)->toBe('approved');
 
     $stored = PrivateResourceKey::query()->sole();
-    $rawKey = app(PrivateDataKeyService::class)->findResourceKey($owner->id, 'personal_data', $entryId);
+
+    $rawKey = app(PrivateDataKeyService::class)->findResourceKey(
+        $owner->id,
+        'personal_data',
+        $entryId
+    );
+
     $privateKey = $requester->fresh()->cryptoKey;
 
-    expect($stored->encrypted_symmetric_key)->not->toContain(base64_encode($rawKey))
-        ->and(base64_decode(Crypt::decryptString($stored->encrypted_symmetric_key), true))->toBe($rawKey)
-        ->and($privateKey->encrypted_private_key)->not->toContain('PRIVATE KEY')
-        ->and(Crypt::decryptString($privateKey->encrypted_private_key))->toContain('PRIVATE KEY')
-        ->and($stored->toArray())->not->toHaveKey('encrypted_symmetric_key')
-        ->and($privateKey->toArray())->not->toHaveKey('encrypted_private_key');
+    expect($stored->encrypted_symmetric_key)
+        ->not->toContain(base64_encode($rawKey))
+        ->and(base64_decode(
+            Crypt::decryptString($stored->encrypted_symmetric_key),
+            true
+        ))->toBe($rawKey)
+        ->and($privateKey->encrypted_private_key)
+        ->not->toContain('PRIVATE KEY')
+        ->and(Crypt::decryptString($privateKey->encrypted_private_key))
+        ->toContain('PRIVATE KEY')
+        ->and($stored->toArray())
+        ->not->toHaveKey('encrypted_symmetric_key')
+        ->and($privateKey->toArray())
+        ->not->toHaveKey('encrypted_private_key');
 });
+
 
 it('re-encrypts a legacy personal entry with its own key when access is approved', function (): void {
     $owner = User::factory()->create();

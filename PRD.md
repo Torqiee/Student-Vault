@@ -1481,7 +1481,7 @@ Status: **Completed**
 
 ## Phase 10A — Private Data Access and Key Management
 
-Status: **In Progress — Assignment 2 (1.1 completed)**
+Status: **Completed — Assignment 2 (1.1–1.3 completed)**
 
 <!-- 1.1 -->
 - [x] Permintaan akses ke data privat pengguna lain, termasuk gambar dan dokumen
@@ -1489,12 +1489,12 @@ Status: **In Progress — Assignment 2 (1.1 completed)**
 - [x] Pembuatan kunci simetris untuk data yang disetujui
 
 <!-- 1.2 -->
-- [ ] Distribusi kunci melalui saluran lain dengan perlindungan enkripsi asimetris
-- [ ] Penyimpanan kunci simetris secara aman di sistem
+- [x] Distribusi kunci melalui saluran lain dengan perlindungan enkripsi asimetris
+- [x] Penyimpanan kunci simetris secara aman di sistem
 
 <!-- 1.3 -->
-- [ ] Verifikasi autentikasi, izin per resource, dan akses hanya untuk peminta yang disetujui
-- [ ] Pengujian akses sebelum persetujuan, setelah penolakan/pencabutan, dan lintas pengguna
+- [x] Verifikasi autentikasi, izin per resource, dan akses hanya untuk peminta yang disetujui
+- [x] Pengujian akses sebelum persetujuan, setelah penolakan/pencabutan, dan lintas pengguna
 
 ---
 
@@ -1587,11 +1587,11 @@ StudentVault dianggap selesai ketika:
 
 ### Private Data Access and Key Management
 
-- [ ] Pengguna dapat meminta akses ke data privat tertentu milik pengguna lain, termasuk gambar dan dokumen.
-- [ ] Pemilik dapat menyetujui, menolak, atau mencabut akses tanpa membuka seluruh data privatnya.
-- [ ] Data yang disetujui dibagikan menggunakan kunci simetris yang dibuat pemilik.
-- [ ] Kunci simetris yang didistribusikan melalui saluran lain telah dienkripsi secara asimetris dan disimpan secara aman di sistem.
-- [ ] Hanya peminta yang disetujui dapat membuka resource terkait; penolakan atau pencabutan menghentikan akses.
+- [x] Pengguna dapat meminta akses ke data privat tertentu milik pengguna lain, termasuk gambar dan dokumen.
+- [x] Pemilik dapat menyetujui, menolak, atau mencabut akses tanpa membuka seluruh data privatnya.
+- [x] Data yang disetujui dibagikan menggunakan kunci simetris yang dibuat pemilik.
+- [x] Kunci simetris yang didistribusikan melalui saluran lain telah dienkripsi secara asimetris dan disimpan secara aman di sistem.
+- [x] Hanya peminta yang disetujui dapat membuka resource terkait; penolakan atau pencabutan menghentikan akses.
 
 ### Productivity
 

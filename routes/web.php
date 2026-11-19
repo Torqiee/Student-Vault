@@ -15,6 +15,7 @@ use App\Http\Controllers\StarredController;
 use App\Http\Controllers\TrashController;
 use App\Http\Controllers\VaultFileController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\PrivateDataResourceController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -59,6 +60,17 @@ Route::middleware('auth')->group(function () {
     Route::post('/private-access/{accessRequest}/approve', [PrivateDataAccessRequestController::class, 'approve'])->name('private-access.approve');
     Route::post('/private-access/{accessRequest}/decline', [PrivateDataAccessRequestController::class, 'decline'])->name('private-access.decline');
     Route::post('/private-access/{accessRequest}/revoke', [PrivateDataAccessRequestController::class, 'revoke'])->name('private-access.revoke');
+
+    // Approved private resource access
+    Route::get(
+        '/private-access/{accessRequest}/personal-data',
+        [PrivateDataResourceController::class, 'showPersonalData']
+    )->whereNumber('accessRequest')->name('private-access.resources.personal-data');
+
+    Route::get(
+        '/private-access/{accessRequest}/file',
+        [PrivateDataResourceController::class, 'downloadFile']
+    )->whereNumber('accessRequest')->name('private-access.resources.file');
 
     Route::get('/shared-folders/invitations', [SharedFolderInvitationController::class, 'index'])->name('shared-folders.invitations.index');
     Route::post('/shared-folder-invitations/{invitation}/accept', [SharedFolderInvitationController::class, 'accept'])->name('shared-folders.invitations.accept');
